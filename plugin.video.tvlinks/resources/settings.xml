@@ -1,0 +1,10 @@
+<settings>
+   <category label="Meta Data">
+  	<setting id="use-meta" type="bool" label="Use Meta Data" default="true"/>
+   </category>
+   <category label="Login Data">
+  	<setting id="TVLinks-username" type="text" label="Login:" default=""/>
+	<setting id="TVLinks-password" type="text" label="Password:" default="" option="hidden"/>
+	<setting id="TVLinks-premium" type="bool" label="Premium Account:" default="False" />
+   </category>
+</settings>

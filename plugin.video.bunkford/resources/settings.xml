@@ -1,0 +1,37 @@
+<settings>
+<category label="WELCOME!">
+<setting label="NOTICE:" type="lsep"/>
+<setting type="sep"/>
+<setting label="Go to http://iseri.es/wp-login.php?action=register to register for iseri.es" type="lsep"/>
+<setting label="Go to http://barwo.com/wp-login.php?action=register to register for barwo.com" type="lsep"/>
+<setting label="" type="lsep"/>
+<setting label="" type="lsep"/>
+<setting label="*** barwo.com is changing to bunnymovie.com" type="lsep"/>
+<setting label="Go to http://bunnymovie.com/wp-login.php?action=register to register now..." type="lsep"/>
+<setting label="Support comming soon" type="lsep"/>
+<setting label="" type="lsep"/>
+</category>
+<category label="iseri.es">
+	<setting id="iseries-username" type="text" label="Login:" default=""/>
+	<setting id="iseries-password" type="text" label="Password:" default="" option="hidden"/>
+</category>
+<category label="barwo.com">
+	<setting id="barwo-username" type="text" label="Login:" default=""/>
+	<setting id="barwo-password" type="text" label="Password:" default="" option="hidden"/>
+</category>
+<category label="bunnymovie.com">
+	<setting id="bunny-username" type="text" label="Login:" default=""/>
+	<setting id="bunny-password" type="text" label="Password:" default="" option="hidden"/>
+</category>
+<category label="Download Locations">
+	 <setting label="TV download location:" type="folder" id="tvdownpath" option="writeable" />
+	 <setting type="sep"/>
+	 <setting label="Movie download location:" type="folder" id="moviedownpath" ption="writeable" />
+</category>
+<category label="Auto-View">
+	<setting id="auto-view" type="bool" label="Enable Automatic View" default="false"/>
+	<setting id="epg" type="number" label="EPG View" default="503" enable="!eq(-1,false)"/>
+	<setting id="default" type="number" label="EVERYTHING" default="503" enable="!eq(-1,false)"/>
+	<setting id="anything" type="number" label="SECOND DIRECTORY" default="503" enable="!eq(-1,false)"/>
+</category>
+</settings>
