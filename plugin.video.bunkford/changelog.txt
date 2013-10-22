@@ -1,3 +1,8 @@
+v1.2
+	>Added downloader -> bring up context menu on item to play and select download.
+v1.1
+	>Added support for bunnymovie.com
+	>Added support for searching
 v1.0
 
 If you like what I'm doing, send me a donation bunkford@gmail.com paypal.

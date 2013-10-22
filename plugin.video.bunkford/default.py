@@ -1,8 +1,9 @@
 # -*- coding: cp1252 -*-
-import urllib,urllib2,re,xbmc,xbmcplugin,xbmcgui,xbmcaddon,sys,os,cookielib, htmlentitydefs
+import urllib,urllib2,re,xbmc,xbmcplugin,xbmcgui,xbmcaddon,sys,os,cookielib,htmlentitydefs,urlresolver
 from BeautifulSoup import BeautifulSoup
 from t0mm0.common.addon import Addon
 from t0mm0.common.net import Net
+
 
 
 ##
@@ -13,7 +14,19 @@ from t0mm0.common.net import Net
 #    add preview context menu option for movie sites (scrape)
 #    add download option to context menu
 
+helpText = """
+For this script to work correctly you need to have valid login information for the following invite only sites:
 
+     http://www.iseri.es
+     http://www.bunnymovie.com
+     http://www.barwo.com (not updated anymore, switched to bunnymovie)
+
+     Add your login credentials to the plugin settings.
+
+Downloading:
+
+     For downloading to work correctly you need to specify download paths in the plugin settings.
+"""
 def xbmcpath(path,filename):
      translatedpath = os.path.join(xbmc.translatePath( path ), ''+filename+'')
      return translatedpath
@@ -46,26 +59,21 @@ path = adatapath
 datapath = _PLUG.get_profile()
 
 downloadScript = "special://home/addons/plugin.video.bunkford/resources/lib/download.py"
+textBoxesScript = "special://home/addons/plugin.video.bunkford/resources/lib/textBoxes.py"
 
 #cookie constants
 cookie_path = os.path.join(datapath)
 cookiejar = os.path.join(cookie_path,'losmovies.lwp')
 net = Net()
 
+# FUNCTIONS USED   
 
-
-
-
-
-# FUNCTIONS USED
-     
+def unescape(text):
 ##
 # Removes HTML or XML character references and entities from a text string.
 #
 # @param text The HTML (or XML) source text.
 # @return The plain text, as a Unicode string, if necessary.
-
-def unescape(text):
     def fixup(m):
         text = m.group(0)
         if text[:2] == "&#":
@@ -87,6 +95,14 @@ def unescape(text):
     return re.sub("&#?\w+;", fixup, text)
 
 def Search(string,url):
+     net.set_cookies(cookiejar)
+     searchurl = url
+     searchstring = string
+     form = {"s" : searchstring}
+     html = net.http_POST(searchurl, form, headers={'User-Agent':USER_AGENT}).content
+     return html
+
+def SearchMovie(string,url):
      net.set_cookies(cookiejar)
      searchurl = url
      searchstring = string
@@ -185,19 +201,31 @@ def BUNNYMOVIE(url,name):
      
 
         image = soup.find('img',attrs={'class':re.compile(r"aligncenter.+?")})['src'];
+
         
         plot = soup.findAll('div',attrs={'class':re.compile(r"post.+?section.+?")});
         for div in plot:
              synopsis = div.findAll('p')
              synopsis = synopsis[2].nextSibling
              synopsis = unescape(synopsis)
-        
+
+        trailer = None
+        preview = soup.findAll('div',attrs={'class':'video-container'});
+        for div in preview:
+             trailer = div.find('iframe')['src']
+             sources = []
+             hosted_media = urlresolver.HostedMediaFile(url=trailer)
+             sources.append(hosted_media)
+             source = urlresolver.choose_source(sources)
+             trailer = source.resolve()
+             
         infoLabels = {}
-        infoLabels={ "TVShowTitle": name }
+        infoLabels={ "Title": name }
         infoLabels={ "Plot": synopsis }
+        #infoLabels={ "Trailer": trailer } Makes Plot disapear for some reason
         
         
-        addLink(name,link,image,'movie',infoLabels=infoLabels) #adds link of episode
+        addLink(name,link,image,'movie',infoLabels=infoLabels,trailer=trailer) #adds link of episode
 
 
 def SEARCHSITE(url):
@@ -208,9 +236,11 @@ def SEARCHSITE(url):
         if keyboard.isConfirmed():
             search_string = keyboard.getText()
 
-            link = Search(search_string,url)
+            link = SearchMovie(search_string,url)
             soup = BeautifulSoup(link)
             print soup.prettify
+
+            
             data = soup.findAll('div',attrs={'class':'thumbnail'});
             for div in data:
                 link = div.find('a')['href']
@@ -296,6 +326,7 @@ def BARWOMOVIE(url,name):
              link = link['content'][7:]
              
         image = soup.find('img',attrs={'class':re.compile(r"aligncenter.+?")})['src'];
+
         
         plot = soup.findAll('div',attrs={'class':'content'});
         for div in plot:
@@ -303,13 +334,23 @@ def BARWOMOVIE(url,name):
              synopsis = synopsis[2].nextSibling
              synopsis = unescape(synopsis)
 
-
+        trailer = None
+        preview = soup.findAll('div',attrs={'class':'video-container'});
+        for div in preview:
+             trailer = div.find('iframe')['src']
+             sources = []
+             hosted_media = urlresolver.HostedMediaFile(url=trailer)
+             sources.append(hosted_media)
+             source = urlresolver.choose_source(sources)
+             trailer = source.resolve()
+             
         infoLabels = {}
-        infoLabels={ "TVShowTitle": name }
+        infoLabels={ "Title": name }
         infoLabels={ "Plot": synopsis }
         
         
-        addLink(name,link,image,'movie',infoLabels=infoLabels) #adds link of episode
+        
+        addLink(name,link,image,'movie',infoLabels=infoLabels,trailer=trailer) #adds link of episode
 
 #ISERI.ES
 
@@ -330,7 +371,7 @@ def CATEGORIES():
         #Name,URL,MODE,Image
         addDir('TV Shows',iseries_URL+'/shows/',1,'')
         addDir( 'Recent TV',iseries_URL,2,'')
-        #addDir('Search TV',iseries_URL,315,'')
+        addDir('Search TV',iseries_URL,4,'')
         #above works, need to parse returned data. not the same as movie sites               
 def INDEX(url):
         net.set_cookies(cookiejar)
@@ -416,6 +457,42 @@ def INDEX3(url,name):
              addDir('Next Episode',nextep,3,'')
         if prevep is not None:
              addDir('Previous Episode',prevep,3,'')
+
+def SEARCHSITETV(url):
+        keyboard = xbmc.Keyboard()
+
+        keyboard.setHeading('Enter a search term')
+        keyboard.doModal()
+        if keyboard.isConfirmed():
+            search_string = keyboard.getText()
+
+            link = Search(search_string,url)
+            soup = BeautifulSoup(link)
+            print soup.prettify
+            
+            data = soup.findAll('article',attrs={'class':'post text_block clearfix'});
+            print data[0]
+            for div in data:
+                link = div.find('a')['href']
+                image = div.find('img')['src']
+                name = div.find('img')['alt']
+                name = cleanUnicode(name) #need to clean or error.
+                name = unescape(name)
+                addDir(name,link,3,image) #adds dir listing of episodes
+                 
+            more = soup.findAll('div',attrs={'class':'more_posts'});
+            for div in more:
+                next_post = div.find('a')['href']
+                if next_post != "#":
+                     addDir(next_post,next_post,'2','') #adds dir listing for next page
+
+            more = soup.findAll('div',attrs={'class':'alignleft'});
+            for div in more:
+                    if div.find('a') is not None:
+                            next_post = div.find('a')['href']
+                            addDir(next_post,next_post,'2','') #adds dir listing for next page
+                 
+            
              
 def get_params():
         param=[]
@@ -436,28 +513,21 @@ def get_params():
         return param
 
  
-def addLink(name,url,iconimage,mediaType=None,infoLabels=False):
+def addLink(name,url,iconimage,mediaType=None,infoLabels=False,trailer=None):
         ok=True
-
-        print mediaType
 
         downloadPath = _PLUG.get_setting(mediaType+'downpath')
         
-        #if mediaType is 'movie': 
-        #     downloadPath = _PLUG.get_setting('movie-download-location')
-        #     
-        #if mediaType is 'tv':
-        #     downloadPath = _PLUG.get_setting('tv-download-location')
-
-
             
-        print 'DOWNLOAD PATH::::'+downloadPath
-             
+        print 'DOWNLOAD PATH: '+downloadPath
+        print url, name
+        
         #handle adding context menus
         contextMenuItems = []
         contextMenuItems.append(('Show Information', 'XBMC.Action(Info)',))
-        contextMenuItems.append(('Download Video', "RunScript("+downloadScript+","+url+","+downloadPath+","+name+","+mediaType+")",))
-        
+        contextMenuItems.append(('Download Video', "RunScript("+downloadScript+","+url.encode('utf-8','ignore')+","+downloadPath+","+name+","+mediaType+")",))
+        if trailer is not None:
+             contextMenuItems.append(('Watch Trailer', 'xbmc.PlayMedia('+trailer+')',))
              
         liz=xbmcgui.ListItem(name, iconImage="DefaultVideo.png", thumbnailImage=iconimage)
         liz.setInfo( type="Video", infoLabels=infoLabels )
@@ -471,10 +541,22 @@ def addLink(name,url,iconimage,mediaType=None,infoLabels=False):
 
 
 def addDir(name,url,mode,iconimage):
+
+        
+        #handle adding context menus
+        contextMenuItems = []
+        contextMenuItems.append(('HELP', "RunScript("+textBoxesScript+",HELP,"+helpText+")",))
+
+        
         u=sys.argv[0]+"?url="+urllib.quote_plus(url.encode('utf-8','ignore'))+"&mode="+str(mode)+"&name="+urllib.quote_plus(name.encode('utf-8','ignore'))
         ok=True
         liz=xbmcgui.ListItem(name, iconImage="DefaultFolder.png", thumbnailImage=iconimage)
         liz.setInfo( type="Video", infoLabels={ "Title": name } )
+
+        if contextMenuItems:
+             #print str(contextMenuItems)
+             liz.addContextMenuItems(contextMenuItems, replaceItems=False)
+             
         ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz,isFolder=True)
         return ok
         
@@ -557,7 +639,10 @@ elif mode==313:
 elif mode==315:
         print""
         SEARCHSITE(url)
-       
+
+elif mode==4:
+        print""
+        SEARCHSITETV(url)
 
 
 
