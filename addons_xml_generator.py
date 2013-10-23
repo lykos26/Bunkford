@@ -21,9 +21,22 @@
 # *  https://anarchintosh-projects.googlecode.com/files/addons_xml_generator.py
  
 """ addons.xml generator """
- 
+
 import os
 import sys
+import zipfile
+import re
+import time
+import shutil
+
+def zipfolder(foldername, target_dir, zips_dir):            
+    zipobj = zipfile.ZipFile(zips_dir + foldername, 'w', zipfile.ZIP_DEFLATED)
+    rootlen = len(target_dir) + 1
+    for base, dirs, files in os.walk(target_dir):
+        for file in files:
+            fn = os.path.join(base, file)
+            zipobj.write(fn, fn[rootlen:])
+                          
  
 # Compatibility with 3.0, 3.1 and 3.2 not supporting u"" literals
 if sys.version < '3':
@@ -110,3 +123,28 @@ class Generator:
 if ( __name__ == "__main__" ):
     # start
     Generator()
+
+    #rezip files an move
+    print 'Starting zip file creation...'
+    rootdir = sys.path[0]
+    zipsdir = rootdir + '\zips'
+
+    filesinrootdir = os.listdir(rootdir)
+    for x in filesinrootdir:
+        if re.search("plugin|repository" , x):
+            foldertozip = rootdir+'\\'+x
+            zipfilename = x + '.zip'
+            zipsfolder = 'zips'
+            zipsfolder = os.path.join(zipsfolder,x)
+            zipsfolder = os.path.normpath(zipsfolder) + os.sep
+            if not os.path.exists(zipsfolder):
+                os.mkdir(zipsfolder)
+                print 'Directory doesn\'t exist, creating: ' + zipsfolder
+            #check if and move changelog, fanart and icon to zipdir
+            filesinfoldertozip = os.listdir(foldertozip)
+            for y in filesinfoldertozip:
+                if re.search("changelog|icon|fanart", y):
+                    shutil.copyfile(os.path.join(rootdir,x,y),os.path.join(zipsfolder,y))
+                    print 'Copying ' + y + ' to ' + zipsfolder
+            zipfolder(zipfilename, foldertozip, zipsfolder)
+            print 'Zipping ' + zipfilename + ' and moving to ' + zipsfolder
