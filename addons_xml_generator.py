@@ -36,6 +36,7 @@ def zipfolder(foldername, target_dir, zips_dir):
         for file in files:
             fn = os.path.join(base, file)
             zipobj.write(fn, os.path.join(foldername[:-4],fn[rootlen:]))
+    zipobj.close()
                           
  
 # Compatibility with 3.0, 3.1 and 3.2 not supporting u"" literals
