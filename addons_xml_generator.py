@@ -30,7 +30,7 @@ import time
 import shutil
 
 def zipfolder(foldername, target_dir, zips_dir):            
-    zipobj = zipfile.ZipFile(zips_dir + foldername, 'w', zipfile.ZIP_STORED)
+    zipobj = zipfile.ZipFile(zips_dir + foldername, 'w', zipfile.ZIP_DEFLATED)
     rootlen = len(target_dir) + 1
     for base, dirs, files in os.walk(target_dir):
         for file in files:
