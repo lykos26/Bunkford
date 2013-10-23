@@ -11,6 +11,9 @@
 <setting label="Support comming soon" type="lsep"/>
 <setting label="" type="lsep"/>
 </category>
+   <category label="Meta Data">
+  	<setting id="use-meta" type="bool" label="Use Meta Data" default="false"/>
+   </category>
 <category label="iseri.es">
 	<setting id="iseries-username" type="text" label="Login:" default=""/>
 	<setting id="iseries-password" type="text" label="Password:" default="" option="hidden"/>

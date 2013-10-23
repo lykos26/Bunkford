@@ -3,6 +3,7 @@ import urllib,urllib2,re,xbmc,xbmcplugin,xbmcgui,xbmcaddon,sys,os,cookielib,html
 from BeautifulSoup import BeautifulSoup
 from t0mm0.common.addon import Addon
 from t0mm0.common.net import Net
+from metahandler import metahandlers
 
 
 
@@ -171,8 +172,19 @@ def BUNNYGENRELIST(url,name):
             link = div.find('a')['href']
             image = div.find('img')['src']
             name = div.find('a').contents[0]
-            name = unescape(name) 
-            addDir(name,link,313,image)
+            name = unescape(name)
+
+            meta = None
+            #getMeta(name=None,season=None,episode=None,year=None,imdbid=None,tvdbid=None):
+            try:
+                 m = [m.start() for m in re.finditer('\\(', name)]
+                 showname = name[:m[0]-1]
+                 year = name[m[0]+1:-1]
+                 meta = getMeta(name=showname,year=year) 
+            except:
+                 pass
+               
+            addDir(name,link,313,image,meta=meta)
             
         #LOAD MORE MOVIES
         next_post = soup.find('a',attrs={'class':'load-more-link no-ajax'})['rel'];
@@ -224,8 +236,17 @@ def BUNNYMOVIE(url,name):
         infoLabels={ "Plot": synopsis }
         #infoLabels={ "Trailer": trailer } Makes Plot disapear for some reason
         
-        
-        addLink(name,link,image,'movie',infoLabels=infoLabels,trailer=trailer) #adds link of episode
+        meta = None
+        #getMeta(name=None,season=None,episode=None,year=None,imdbid=None,tvdbid=None):
+        try:
+             m = [m.start() for m in re.finditer('\\(', name)]
+             showname = name[:m[0]-1]
+             year = name[m[0]+1:-1]
+             meta = getMeta(name=showname,year=year) 
+        except:
+             pass
+               
+        addLink(name,link,image,'movie',infoLabels=infoLabels,trailer=trailer,meta=meta) #adds link of episode
 
 
 def SEARCHSITE(url):
@@ -247,7 +268,18 @@ def SEARCHSITE(url):
                 image = div.find('img')['src']
                 name = div.find('img')['alt']
                 name = unescape(name)
-                addDir(name,link,313,image)
+
+                meta = None
+                #getMeta(name=None,season=None,episode=None,year=None,imdbid=None,tvdbid=None):
+                try:
+                     m = [m.start() for m in re.finditer('\\(', name)]
+                     showname = name[:m[0]-1]
+                     year = name[m[0]+1:-1]
+                     meta = getMeta(name=showname,year=year) 
+                except:
+                     pass
+               
+                addDir(name,link,313,image,meta=meta)
                 
                           
 #BARWO.COM
@@ -297,8 +329,19 @@ def BARWOGENRELIST(url,name):
             link = div.find('a')['href']
             image = div.find('img')['src']
             name = div.find('a').contents[0]
-            name = unescape(name) 
-            addDir(name,link,113,image)
+            name = unescape(name)
+
+            meta = None
+            #getMeta(name=None,season=None,episode=None,year=None,imdbid=None,tvdbid=None):
+            try:
+                 m = [m.start() for m in re.finditer('\\(', name)]
+                 showname = name[:m[0]-1]
+                 year = name[m[0]+1:-1]
+                 meta = getMeta(name=showname,year=year) 
+            except:
+                 pass
+      
+            addDir(name,link,113,image,meta=meta)
             
         #LOAD MORE MOVIES
         next_post = soup.find('a',attrs={'class':'load-more-link no-ajax'})['rel'];
@@ -347,10 +390,18 @@ def BARWOMOVIE(url,name):
         infoLabels = {}
         infoLabels={ "Title": name }
         infoLabels={ "Plot": synopsis }
+
+        meta = None
+        #getMeta(name=None,season=None,episode=None,year=None,imdbid=None,tvdbid=None):
+        try:
+             m = [m.start() for m in re.finditer('\\(', name)]
+             showname = name[:m[0]-1]
+             year = name[m[0]+1:-1]
+             meta = getMeta(name=showname,year=year) 
+        except:
+             pass     
         
-        
-        
-        addLink(name,link,image,'movie',infoLabels=infoLabels,trailer=trailer) #adds link of episode
+        addLink(name,link,image,'movie',infoLabels=infoLabels,trailer=trailer,meta=meta) #adds link of episode
 
 #ISERI.ES
 
@@ -398,19 +449,31 @@ def INDEX2(url,name):
             name = div.find('img')['alt']
             name = cleanUnicode(name) #need to clean or error.
             name = unescape(name)
-            addDir(name,link,3,image) #adds dir listing of episodes
+
+            meta = None
+            #getMeta(name=None,season=None,episode=None,year=None,imdbid=None,tvdbid=None):
+            try:
+                 m = [m.start() for m in re.finditer('-', name)]
+                 showname = name[:m[0]-1]
+                 seasonepisode = name[m[0]+2:]
+                 season = int(seasonepisode[1:3])
+                 episode = int(seasonepisode[4:6])
+                 meta = getMeta(name=showname,season=season,episode=episode) 
+            except:
+                 pass
+            addDir(name,link,3,image,meta=meta) #adds dir listing of episodes
             
         more = soup.findAll('div',attrs={'class':'more_posts'});
         for div in more:
             next_post = div.find('a')['href']
             if next_post != "#":
-                 addDir(next_post,next_post,'2','') #adds dir listing for next page
+                 addDir(next_post,next_post,'2','',meta=meta) #adds dir listing for next page
 
         more = soup.findAll('div',attrs={'class':'alignleft'});
         for div in more:
                 if div.find('a') is not None:
                         next_post = div.find('a')['href']
-                        addDir(next_post,next_post,'2','') #adds dir listing for next page
+                        addDir(next_post,next_post,'2','',meta=meta) #adds dir listing for next page
 
 def INDEX3(url,name):
         net.set_cookies(cookiejar)
@@ -440,8 +503,20 @@ def INDEX3(url,name):
         infoLabels={ "TVShowTitle": name }
         infoLabels={ "Plot": plot }
 
-        #previous and next episodes
 
+        meta = None
+        #getMeta(name=None,season=None,episode=None,year=None,imdbid=None,tvdbid=None):
+        try:
+             m = [m.start() for m in re.finditer('-', showtitle)]
+             showname = showtitle[:m[0]-1]
+             seasonepisode = showtitle[m[0]+2:]
+             season = int(seasonepisode[1:3])
+             episode = int(seasonepisode[4:6])
+             meta = getMeta(name=showname,season=season,episode=episode) 
+        except:
+             pass
+          
+        #previous and next episodes
         try:
              nextep = soup.find('a',attrs={'rel':'next'})['href'];
         except:
@@ -451,12 +526,12 @@ def INDEX3(url,name):
         except:
              prevep = None
         
-        addLink(showtitle + ' - ' + name[1:-1],link,image,'tv',infoLabels=infoLabels) #adds link of episode
+        addLink(showtitle + ' - ' + name[1:-1],link,image,'tv',infoLabels=infoLabels,meta=meta) #adds link of episode
 
         if nextep is not None:
-             addDir('Next Episode',nextep,3,'')
+             addDir('Next Episode',nextep,3,'',meta=meta)
         if prevep is not None:
-             addDir('Previous Episode',prevep,3,'')
+             addDir('Previous Episode',prevep,3,'',meta=meta)
 
 def SEARCHSITETV(url):
         keyboard = xbmc.Keyboard()
@@ -478,7 +553,20 @@ def SEARCHSITETV(url):
                 name = div.find('img')['alt']
                 name = cleanUnicode(name) #need to clean or error.
                 name = unescape(name)
-                addDir(name,link,3,image) #adds dir listing of episodes
+
+                meta = None
+                #getMeta(name=None,season=None,episode=None,year=None,imdbid=None,tvdbid=None):
+                try:
+                     m = [m.start() for m in re.finditer('-', name)]
+                     showname = name[:m[0]-1]
+                     seasonepisode = name[m[0]+2:]
+                     season = int(seasonepisode[1:3])
+                     episode = int(seasonepisode[4:6])
+                     meta = getMeta(name=showname,season=season,episode=episode) 
+                except:
+                     pass
+               
+                addDir(name,link,3,image,meta=meta) #adds dir listing of episodes
                  
             more = soup.findAll('div',attrs={'class':'more_posts'});
             for div in more:
@@ -513,23 +601,43 @@ def get_params():
         return param
 
  
-def addLink(name,url,iconimage,mediaType=None,infoLabels=False,trailer=None):
+def addLink(name,url,iconimage,mediaType=None,infoLabels=False,trailer=None,meta=None):
         ok=True
 
         downloadPath = _PLUG.get_setting(mediaType+'downpath')
-        
-            
-        print 'DOWNLOAD PATH: '+downloadPath
-        print url, name
-        
+                
         #handle adding context menus
         contextMenuItems = []
         contextMenuItems.append(('Show Information', 'XBMC.Action(Info)',))
         contextMenuItems.append(('Download Video', "RunScript("+downloadScript+","+url.encode('utf-8','ignore')+","+downloadPath+","+name+","+mediaType+")",))
         if trailer is not None:
              contextMenuItems.append(('Watch Trailer', 'xbmc.PlayMedia('+trailer+')',))
+
+        if meta is None:     
+             liz=xbmcgui.ListItem(name, iconImage="DefaultVideo.png", thumbnailImage=iconimage)
+        else:
+
+             liz = xbmcgui.ListItem(name, iconImage=str(meta['cover_url']), thumbnailImage=str(meta['cover_url']))
+
+
+             liz.setInfo('video', infoLabels=meta)
+             liz.setProperty('fanart_image', meta['backdrop_url'])
              
-        liz=xbmcgui.ListItem(name, iconImage="DefaultVideo.png", thumbnailImage=iconimage)
+             infoLabels = {}
+             infoLabels['title'] = name
+             infoLabels['plot'] = cleanUnicode(meta['plot']) # to-check if we need cleanUnicode
+             infoLabels['duration'] = str(meta['duration'])
+             infoLabels['premiered'] = str(meta['premiered'])
+             infoLabels['mpaa'] = str(meta['mpaa'])
+             infoLabels['code'] = str(meta['imdb_id'])
+             infoLabels['rating'] = float(meta['rating'])
+             #infoLabels['overlay'] = meta['watched'] # watched 7, unwatched 6
+
+             if meta.has_key('season_num'):
+                 infoLabels['Episode'] = int(meta['episode_num'])
+                 infoLabels['Season'] =int(meta['season_num'])
+                 print 'No refresh for episodes yet'
+             
         liz.setInfo( type="Video", infoLabels=infoLabels )
 
         if contextMenuItems:
@@ -538,9 +646,30 @@ def addLink(name,url,iconimage,mediaType=None,infoLabels=False,trailer=None):
              
         ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=url,listitem=liz)
         return ok
-
-
-def addDir(name,url,mode,iconimage):
+     
+def getMeta(name=None,season=None,episode=None,year=None,imdbid=None,tvdbid=None):
+        print 'getMeta() ran',name,season,episode,year,imdbid,tvdbid
+        useMeta = _PLUG.get_setting('use-meta')
+        print useMeta
+        if useMeta == 'true':
+             print 'use-meta = true'
+             metaget=metahandlers.MetaData(translateddatapath)
+             if episode and season is not None:
+                  print 'getMeta() is tvshow'
+                  #get_episode_meta(self, tvshowtitle, imdb_id, season, episode, air_date='', episode_title='', overlay=''):
+                  #get season and episode
+                  meta=metaget.get_meta('tvshow',name)
+                  #meta=megaget.get_episode_meta(name,meta['imdbid'],season,episode)
+                  
+                  #_get_tv_extra(self, meta):
+                  #meta=metaget.get_tv_extra(meta)
+             else:
+                  #get_meta(self, media_type, name, imdb_id='', tmdb_id='', year='', overlay=6):
+                  #get regular
+                  meta=metaget.get_meta('movie',name,year=year)
+        return meta
+     
+def addDir(name,url,mode,iconimage,meta=None):
 
         
         #handle adding context menus
@@ -550,7 +679,34 @@ def addDir(name,url,mode,iconimage):
         
         u=sys.argv[0]+"?url="+urllib.quote_plus(url.encode('utf-8','ignore'))+"&mode="+str(mode)+"&name="+urllib.quote_plus(name.encode('utf-8','ignore'))
         ok=True
-        liz=xbmcgui.ListItem(name, iconImage="DefaultFolder.png", thumbnailImage=iconimage)
+        
+        if meta is None:     
+             liz=xbmcgui.ListItem(name, iconImage="DefaultFolder.png", thumbnailImage=iconimage)
+     
+        else:
+
+             liz = xbmcgui.ListItem(name, iconImage=str(meta['cover_url']), thumbnailImage=str(meta['cover_url']))
+
+
+             liz.setInfo('video', infoLabels=meta)
+             liz.setProperty('fanart_image', meta['backdrop_url'])
+
+                
+             infoLabels = {}
+             infoLabels['title'] = name
+             infoLabels['plot'] = cleanUnicode(meta['plot']) # to-check if we need cleanUnicode
+             infoLabels['duration'] = str(meta['duration'])
+             infoLabels['premiered'] = str(meta['premiered'])
+             infoLabels['mpaa'] = str(meta['mpaa'])
+             infoLabels['code'] = str(meta['imdb_id'])
+             infoLabels['rating'] = float(meta['rating'])
+             #infoLabels['overlay'] = meta['watched'] # watched 7, unwatched 6
+
+             if meta.has_key('season_num'):
+                 infoLabels['Episode'] = int(meta['episode_num'])
+                 infoLabels['Season'] =int(meta['season_num'])
+                 print 'No refresh for episodes yet'
+                 
         liz.setInfo( type="Video", infoLabels={ "Title": name } )
 
         if contextMenuItems:
