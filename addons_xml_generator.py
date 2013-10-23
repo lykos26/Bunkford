@@ -28,16 +28,7 @@ import zipfile
 import re
 import time
 import shutil
-
-def zipfolder(foldername, target_dir, zips_dir):            
-    zipobj = zipfile.ZipFile(zips_dir + foldername, 'w', zipfile.ZIP_DEFLATED)
-    rootlen = len(target_dir) + 1
-    for base, dirs, files in os.walk(target_dir):
-        for file in files:
-            fn = os.path.join(base, file)
-            zipobj.write(fn, os.path.join(foldername[:-4],fn[rootlen:]))
-    zipobj.close()
-                          
+import xml.etree.ElementTree as ET
  
 # Compatibility with 3.0, 3.1 and 3.2 not supporting u"" literals
 if sys.version < '3':
@@ -121,6 +112,16 @@ class Generator:
             print("An error occurred saving %s file!\n%s" % ( file, e ))
  
  
+def zipfolder(foldername, target_dir, zips_dir):            
+    zipobj = zipfile.ZipFile(zips_dir + foldername, 'w', zipfile.ZIP_DEFLATED)
+    rootlen = len(target_dir) + 1
+    for base, dirs, files in os.walk(target_dir):
+        for file in files:
+            fn = os.path.join(base, file)
+            zipobj.write(fn, os.path.join(foldername[:-4],fn[rootlen:]))
+    zipobj.close()
+
+                     
 if ( __name__ == "__main__" ):
     # start
     Generator()
@@ -135,6 +136,8 @@ if ( __name__ == "__main__" ):
         if re.search("plugin|repository" , x):
             foldertozip = rootdir+'\\'+x
             zipfilename = x + '.zip'
+            zipfilenamefirstpart = zipfilename[:-4]
+            zipfilenamelastpart = zipfilename[len(zipfilename)-4:]
             zipsfolder = 'zips'
             zipsfolder = os.path.join(zipsfolder,x)
             zipsfolder = os.path.normpath(zipsfolder) + os.sep
@@ -144,8 +147,20 @@ if ( __name__ == "__main__" ):
             #check if and move changelog, fanart and icon to zipdir
             filesinfoldertozip = os.listdir(foldertozip)
             for y in filesinfoldertozip:
+                print 'processing file: ' + os.path.join(rootdir,x,y)
+                if re.search("addon.xml", y): # get version number of plugin
+                    tree = ET.parse(os.path.join(rootdir,x,y))
+                    root = tree.getroot()
+                    for elem in root.iter('addon'):
+                        print elem.tag + ': ' + elem.attrib['version']
+                        version = '-'+elem.attrib['version']
+                if re.search("changelog", y):
+                    firstpart = y[:-4]
+                    lastpart = y[len(y)-4:]
+                    shutil.copyfile(os.path.join(rootdir,x,y),os.path.join(zipsfolder,firstpart+version+lastpart))
+                    print 'Copying ' + y + ' to ' + zipsfolder
                 if re.search("changelog|icon|fanart", y):
                     shutil.copyfile(os.path.join(rootdir,x,y),os.path.join(zipsfolder,y))
                     print 'Copying ' + y + ' to ' + zipsfolder
-            zipfolder(zipfilename, foldertozip, zipsfolder)
-            print 'Zipping ' + zipfilename + ' and moving to ' + zipsfolder
+            zipfolder(zipfilenamefirstpart+version+zipfilenamelastpart, foldertozip, zipsfolder)
+            print 'Zipping ' + zipfilename + ' and moving to ' + zipfilenamefirstpart+version
