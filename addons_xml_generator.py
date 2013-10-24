@@ -115,10 +115,12 @@ class Generator:
 def zipfolder(foldername, target_dir, zips_dir):            
     zipobj = zipfile.ZipFile(zips_dir + foldername, 'w', zipfile.ZIP_DEFLATED)
     rootlen = len(target_dir) + 1
+    m = [m.start() for m in re.finditer('-[0-9]+', foldername)]
+    ziprootdir = foldername[:m[0]]
     for base, dirs, files in os.walk(target_dir):
         for file in files:
             fn = os.path.join(base, file)
-            zipobj.write(fn, os.path.join(foldername[:-4],fn[rootlen:]))
+            zipobj.write(fn, os.path.join(ziprootdir,fn[rootlen:]))
     zipobj.close()
 
                      

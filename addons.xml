@@ -3,7 +3,7 @@
 <addon
 	id="plugin.video.bunkford"
 	name="Bunkford"
-	version="1.4"
+	version="1.4.1"
 	provider-name="bunkford">
 
   <requires>
