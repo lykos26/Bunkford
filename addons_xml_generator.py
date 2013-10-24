@@ -119,7 +119,7 @@ def zipfolder(foldername, target_dir, zips_dir):
         m = [m.start() for m in re.finditer('-[0-9]+', foldername)]
         ziprootdir = foldername[:m[0]]
     except:
-        ziprootdir = foldername
+        ziprootdir = foldername[:-4]
     for base, dirs, files in os.walk(target_dir):
         for file in files:
             fn = os.path.join(base, file)
