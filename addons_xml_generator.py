@@ -115,8 +115,11 @@ class Generator:
 def zipfolder(foldername, target_dir, zips_dir):            
     zipobj = zipfile.ZipFile(zips_dir + foldername, 'w', zipfile.ZIP_DEFLATED)
     rootlen = len(target_dir) + 1
-    m = [m.start() for m in re.finditer('-[0-9]+', foldername)]
-    ziprootdir = foldername[:m[0]]
+    try:
+        m = [m.start() for m in re.finditer('-[0-9]+', foldername)]
+        ziprootdir = foldername[:m[0]]
+    except:
+        ziprootdir = foldername
     for base, dirs, files in os.walk(target_dir):
         for file in files:
             fn = os.path.join(base, file)
@@ -131,7 +134,12 @@ if ( __name__ == "__main__" ):
     #rezip files an move
     print 'Starting zip file creation...'
     rootdir = sys.path[0]
+    
     zipsdir = rootdir + '\zips'
+    try:
+        os.mkdir(zipsdir)
+    except:
+        pass
 
     filesinrootdir = os.listdir(rootdir)
     for x in filesinrootdir:
@@ -159,10 +167,10 @@ if ( __name__ == "__main__" ):
                 if re.search("changelog", y):
                     firstpart = y[:-4]
                     lastpart = y[len(y)-4:]
-                    shutil.copyfile(os.path.join(rootdir,x,y),os.path.join(zipsfolder,firstpart+version+lastpart))
+                    shutil.copyfile(os.path.join(rootdir,x,y),os.path.join(zipsfolder,firstpart+lastpart))
                     print 'Copying ' + y + ' to ' + zipsfolder
                 if re.search("changelog|icon|fanart", y):
                     shutil.copyfile(os.path.join(rootdir,x,y),os.path.join(zipsfolder,y))
                     print 'Copying ' + y + ' to ' + zipsfolder
-            zipfolder(zipfilenamefirstpart+version+zipfilenamelastpart, foldertozip, zipsfolder)
+            zipfolder(zipfilenamefirstpart+zipfilenamelastpart, foldertozip, zipsfolder)
             print 'Zipping ' + zipfilename + ' and moving to ' + zipfilenamefirstpart+version
