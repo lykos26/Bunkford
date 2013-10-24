@@ -169,7 +169,7 @@ if ( __name__ == "__main__" ):
                     lastpart = y[len(y)-4:]
                     shutil.copyfile(os.path.join(rootdir,x,y),os.path.join(zipsfolder,firstpart+version+lastpart))
                     print 'Copying ' + y + ' to ' + zipsfolder
-                if re.search("changelog|icon|fanart", y):
+                if re.search("icon|fanart", y):
                     shutil.copyfile(os.path.join(rootdir,x,y),os.path.join(zipsfolder,y))
                     print 'Copying ' + y + ' to ' + zipsfolder
             zipfolder(zipfilenamefirstpart+version+zipfilenamelastpart, foldertozip, zipsfolder)
