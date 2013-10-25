@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<addon id="repository.bunkford.googlemusic" name="GoogleMusic Repository" version="1.0" provider-name="bunkford">
+	<extension point="xbmc.addon.repository" name="GoogleMusic Repository">
+		<info compressed="false">http://github.com/bunkford/GoogleMusic/raw/master/addons.xml</info>
+		<checksum>http://github.com/bunkford/GoogleMusic/raw/master/addons.xml.md5</checksum>
+		<datadir zip="true">http://github.com/bunkford/GoogleMusic/raw/master/zips</datadir>
+	</extension>
+    <extension point="xbmc.addon.metadata">
+        <summary>GoogleMusic Addon Repository</summary>
+        <description>Download and install google music addon repository. I didn't code this, just changed some broken dependencies!</description>
+        <disclaimer></disclaimer>
+        <platform>all</platform>
+    </extension>
+</addon>
+
