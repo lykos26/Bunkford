@@ -1,5 +1,31 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <addons>
+<addon id="plugin.audio.googlemusic"
+       name="Google Music"
+       version="0.8.2"
+       provider-name="Valentin-Costel Hăloiu">
+  <requires>
+    <import addon="xbmc.python" version="2.1.0"/>
+    <import addon="xbmc.addon" version="12.0.0"/>
+    <import addon="script.module.parsedom" version="2.5.1"/>
+    <import addon="script.module.gmusicapi" version="2013.02.28"/>
+	<import addon="script.module.mutagen" version="1.21.0"/>
+	<import addon="script.module.requests" version="1.1.0"/>
+	<import addon="script.module.decorator" version="3.3.3"/>
+	<import addon="script.module.protobuf" version="2.4.2"/>
+	<import addon="script.module.validictory" version="0.9.0"/>
+  </requires>
+  <extension point="xbmc.python.pluginsource" library="default.py">
+        <provides>audio</provides>
+  </extension>
+  <extension point="xbmc.addon.metadata">
+    <platform>all</platform>
+    <summary lang="en">Google Music audio plugin</summary>
+    <description lang="en">Plugin that lets you play music from Google Music.</description>
+    <disclaimer>Some parts of this addon may not be legal in your country of residence - please check with your local laws before installing.</disclaimer>
+  </extension>
+</addon>
+
 <addon
 	id="plugin.video.bunkford"
 	name="Bunkford"
@@ -99,17 +125,111 @@
     </extension>
 </addon>
 
-<addon id="repository.bunkford.googlemusic" name="GoogleMusic Repository" version="1.0" provider-name="bunkford">
-	<extension point="xbmc.addon.repository" name="GoogleMusic Repository">
-		<info compressed="false">http://github.com/bunkford/GoogleMusic/raw/master/addons.xml</info>
-		<checksum>http://github.com/bunkford/GoogleMusic/raw/master/addons.xml.md5</checksum>
-		<datadir zip="true">http://github.com/bunkford/GoogleMusic/raw/master/zips</datadir>
-	</extension>
-    <extension point="xbmc.addon.metadata">
-        <summary>GoogleMusic Addon Repository</summary>
-        <description>Download and install google music addon repository. I didn't code this, just changed some broken dependencies!</description>
-        <disclaimer></disclaimer>
-        <platform>all</platform>
-    </extension>
+<addon id="script.module.gmusicapi"
+       name="gmusicapi"
+       version="2013.02.28"
+       provider-name="vially">
+  <requires>
+    <import addon="xbmc.python" version="2.1.0"/>
+    <import addon="script.module.validictory" version="0.9.0"/>
+    <import addon="script.module.decorator" version="3.3.3"/>
+    <import addon="script.module.mutagen" version="1.21.0"/>
+    <import addon="script.module.protobuf" version="2.4.2"/>
+    <import addon="script.module.requests" version="1.1.0"/>
+  </requires>
+  <extension point="xbmc.python.module"
+             library="lib" />
+  <extension point="xbmc.addon.metadata">
+    <summary>An unofficial API for Google Music</summary>
+    <description>Packed for XBMC from https://github.com/simon-weber/Unofficial-Google-Music-API</description>
+    <license>BSD</license>
+    <platform>all</platform>
+    <source>https://github.com/vially/xbmc-gmusicapi</source>
+  </extension>
+</addon>
+
+<addon id="script.module.mutagen"
+       name="mutagen"
+       version="1.21.0"
+       provider-name="Joe Wreschnig">
+  <requires>
+    <import addon="xbmc.python" version="2.1.0"/>
+  </requires>
+  <extension point="xbmc.python.module"
+             library="lib" />
+  <extension point="xbmc.addon.metadata">
+    <platform>all</platform>
+    <source>https://github.com/Giftie/script.module.mutagen</source>
+  </extension>
+</addon>
+
+<addon id="script.module.requests"
+       name="requests"
+       version="1.1.0"
+       provider-name="kennethreitz">
+  <requires>
+    <import addon="xbmc.python" version="2.1.0"/>
+  </requires>
+  <extension point="xbmc.python.module"
+             library="lib" />
+  <extension point="xbmc.addon.metadata">
+    <summary>Python HTTP for Humans</summary>
+    <description>Packed for XBMC from https://github.com/kennethreitz/requests</description>
+    <license>Apache</license>
+    <platform>all</platform>
+    <source>https://github.com/beenje/script.module.requests</source>
+  </extension>
+</addon>
+
+<addon id="script.module.decorator"
+       name="decorator"
+       version="3.3.3"
+       provider-name="Valentin-Costel Hăloiu">
+  <requires>
+    <import addon="xbmc.python" version="2.0"/>
+  </requires>
+  <extension point="xbmc.python.module"
+             library="lib" />
+  <extension point="xbmc.addon.metadata">
+    <summary>Python decorator library</summary>
+    <description>Packed for XBMC from http://code.google.com/p/micheles/source/browse/decorator</description>
+    <license>BSD</license>
+    <platform>all</platform>
+  </extension>
+</addon>
+
+<addon id="script.module.protobuf"
+       name="protobuf"
+       version="2.4.2"
+       provider-name="Valentin-Costel Hăloiu">
+  <requires>
+    <import addon="xbmc.python" version="2.0"/>
+  </requires>
+  <extension point="xbmc.python.module"
+             library="lib" />
+  <extension point="xbmc.addon.metadata">
+    <summary>Protocol Buffers are Google's data interchange format</summary>
+    <description>Packed for XBMC from http://code.google.com/p/protobuf</description>
+    <license>New BSD License</license>
+    <platform>all</platform>
+  </extension>
+</addon>
+
+<addon id="script.module.validictory"
+       name="validictory"
+       version="0.9.0"
+       provider-name="vially">
+  <requires>
+    <import addon="xbmc.python" version="2.1.0"/>
+  </requires>
+  <extension point="xbmc.python.module"
+             library="lib" />
+  <extension point="xbmc.addon.metadata">
+    <summary>A general purpose Python data validator</summary>
+    <description>Packed for XBMC from https://github.com/sunlightlabs/validictory</description>
+    <license>MIT</license>
+    <platform>all</platform>
+    <source>https://github.com/vially/xbmc-validictory</source>
+  </extension>
 </addon>
 </addons>

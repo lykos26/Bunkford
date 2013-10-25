@@ -1,0 +1,3 @@
+[B]0.8.2[/B]- fixed missing requires in addon.xml
+[B]0.8.0[/B]
+- update gmusicapi to version 2013.02.27
