@@ -125,6 +125,23 @@
     </extension>
 </addon>
 
+<addon id="script.module.decorator"
+       name="decorator"
+       version="3.3.3"
+       provider-name="Valentin-Costel Hăloiu">
+  <requires>
+    <import addon="xbmc.python" version="2.0"/>
+  </requires>
+  <extension point="xbmc.python.module"
+             library="lib" />
+  <extension point="xbmc.addon.metadata">
+    <summary>Python decorator library</summary>
+    <description>Packed for XBMC from http://code.google.com/p/micheles/source/browse/decorator</description>
+    <license>BSD</license>
+    <platform>all</platform>
+  </extension>
+</addon>
+
 <addon id="script.module.gmusicapi"
        name="gmusicapi"
        version="2013.02.28"
@@ -163,6 +180,23 @@
   </extension>
 </addon>
 
+<addon id="script.module.protobuf"
+       name="protobuf"
+       version="2.4.2"
+       provider-name="Valentin-Costel Hăloiu">
+  <requires>
+    <import addon="xbmc.python" version="2.0"/>
+  </requires>
+  <extension point="xbmc.python.module"
+             library="lib" />
+  <extension point="xbmc.addon.metadata">
+    <summary>Protocol Buffers are Google's data interchange format</summary>
+    <description>Packed for XBMC from http://code.google.com/p/protobuf</description>
+    <license>New BSD License</license>
+    <platform>all</platform>
+  </extension>
+</addon>
+
 <addon id="script.module.requests"
        name="requests"
        version="1.1.0"
@@ -178,40 +212,6 @@
     <license>Apache</license>
     <platform>all</platform>
     <source>https://github.com/beenje/script.module.requests</source>
-  </extension>
-</addon>
-
-<addon id="script.module.decorator"
-       name="decorator"
-       version="3.3.3"
-       provider-name="Valentin-Costel Hăloiu">
-  <requires>
-    <import addon="xbmc.python" version="2.0"/>
-  </requires>
-  <extension point="xbmc.python.module"
-             library="lib" />
-  <extension point="xbmc.addon.metadata">
-    <summary>Python decorator library</summary>
-    <description>Packed for XBMC from http://code.google.com/p/micheles/source/browse/decorator</description>
-    <license>BSD</license>
-    <platform>all</platform>
-  </extension>
-</addon>
-
-<addon id="script.module.protobuf"
-       name="protobuf"
-       version="2.4.2"
-       provider-name="Valentin-Costel Hăloiu">
-  <requires>
-    <import addon="xbmc.python" version="2.0"/>
-  </requires>
-  <extension point="xbmc.python.module"
-             library="lib" />
-  <extension point="xbmc.addon.metadata">
-    <summary>Protocol Buffers are Google's data interchange format</summary>
-    <description>Packed for XBMC from http://code.google.com/p/protobuf</description>
-    <license>New BSD License</license>
-    <platform>all</platform>
   </extension>
 </addon>
 
