@@ -29,28 +29,37 @@ class GoogleMusicNavigation():
 
     def listMenu(self, params={}):
         get = params.get
-        path = get("path", "root")
+        self.path = get("path", "root")
 
         listItems = []
         updateListing = False
 
-        if path == "root":
+        if self.path == "root":
             listItems = self.getMainMenuItems()
-        elif path == "playlist":
+        elif self.path == "playlist":
             listItems = self.listPlaylistSongs(get("playlist_id"))
-        elif path == "playlists":
+        elif self.path == "station":
+            listItems = self.getStationTracks(get('id'))
+        elif self.path == "playlists":
             playlist_type = get('playlist_type')
             if playlist_type in ('auto', 'user'):
                 listItems = self.getPlaylists(playlist_type)
+            elif playlist_type == 'radio':
+                listItems = self.getStations()
             else:
                 self.main.log("Invalid playlist type: " + playlist_type)
-        elif path == "filter":
+        elif self.path == "filter":
             criteria  = get('criteria')
             listItems = self.getCriteria(criteria)
-        elif path in ["genre","artist","album"]:
+        elif self.path == "artist":
+            listItems = self.getCriteria("album",urllib.unquote(get('name')))
+            listItems.insert(0,self.addFolderListItem(self.language(30201),{'path':"artist_allsongs", 'name':urllib.unquote(get('name'))}))
+        elif self.path == "artist_allsongs":
+            listItems = self.listFilterSongs("artist",get('name'))
+        elif self.path in ["genre","artist","album"]:
             filter_criteria = get('name')
-            listItems = self.listFilterSongs(path,filter_criteria)
-        elif path == "search":
+            listItems = self.listFilterSongs(self.path,filter_criteria)
+        elif self.path == "search":
             query = common.getUserInput(self.language(30208), '')
             if query:
                 listItems = self.getSearch(query)
@@ -76,6 +85,9 @@ class GoogleMusicNavigation():
                 cm = self.getPlaylistsContextMenuItems(params['playlist_type'])
             menuItems.append(self.addFolderListItem(menu_item['title'], params, cm))
 
+        if self.getStations():
+            menuItems.append(self.addFolderListItem('Stations', {'path':"playlists", 'playlist_type':"radio"}))
+
         return menuItems
 
     def executeAction(self, params={}):
@@ -96,6 +108,8 @@ class GoogleMusicNavigation():
             self.main.log("Invalid action: " + get("action"))
 
     def addFolderListItem(self, name, params={}, contextMenu=[], album_art_url=""):
+        if not name:
+            name = 'Unknown'
         li = self.xbmcgui.ListItem(label=name, iconImage=album_art_url, thumbnailImage=album_art_url)
         li.setProperty("Folder", "true")
 
@@ -109,7 +123,11 @@ class GoogleMusicNavigation():
     def addSongItem(self, song):
         song_id = song[0].encode('utf-8')
 
-        li = self.song.createItem(song)
+        if self.path == 'artist_allsongs' and song[7]:
+            # add album name when showing all artist songs
+            li = self.song.createItem(song, ('['+song[7]+'] '+song[8]).encode('utf-8'))
+        else:
+            li = self.song.createItem(song)
 
         url = '%s?action=play_song&song_id=%s' % (sys.argv[0], song_id)
         return url,li
@@ -136,12 +154,12 @@ class GoogleMusicNavigation():
         songs = self.api.getFilterSongs(filter_type, filter_criteria)
         return self.addSongsFromLibrary(songs)
 
-    def getCriteria(self, criteria):
+    def getCriteria(self, criteria, artist=''):
         listItems = []
-        genres = self.api.getCriteria(criteria)
+        genres = self.api.getCriteria(criteria,artist)
         for genre in genres:
             if genre[1]:
-                art = 'http:' + genre[1]
+                art = genre[1]
             else:
                 art = self.main.__icon__
             cm = self.getFilterContextMenuItems(criteria,genre[0])
@@ -164,7 +182,6 @@ class GoogleMusicNavigation():
             songs = self.api.getPlaylistSongs(playlist_id)
         else:
             songs = self.api.getFilterSongs(get('filter_type'), get('filter_criteria'))
-
 
         player = self.xbmc.Player()
         if (player.isPlaying()):
@@ -207,3 +224,23 @@ class GoogleMusicNavigation():
         results = self.api.getSearch(query)
         return self.addSongsFromLibrary(results)
 
+    def getStations(self):
+        listItems = []
+        stations = self.api.getStations()
+        #stations = [{'name':'Teste','id':'1287yed82d'}]
+        for rs in stations:
+           listItems.append(self.addFolderListItem(rs['name'], {'path':"station",'id':rs['id']}))
+        return listItems
+
+    def getStationTracks(self,station_id):
+        listItems = []
+        tracks = self.api.getStationTracks(station_id)
+        #tracks = [{'title':'Teste1','id':'f5d1db5a-77d6-3b89-993b-b6ee45b3abce'},{'title':'Teste2','id':'kf7fi765'}]
+        for track in tracks:
+            li = self.xbmcgui.ListItem(track['title'])
+            li.setProperty('IsPlayable', 'true')
+            li.setProperty('Music', 'true')
+            url = '%s?action=play_radio&%s' % (sys.argv[0],urllib.urlencode(track))
+            li.setPath(url)
+            listItems.append([url,li])
+        return listItems
