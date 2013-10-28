@@ -58,7 +58,7 @@ transmetapath = xbmcpath(metapath,'')
 translateddatapath = xbmcpath(adatapath,'')
 path = adatapath
 datapath = _PLUG.get_profile()
-
+artdir = "special://home/addons/plugin.video.bunkford/resources/media/"
 downloadScript = "special://home/addons/plugin.video.bunkford/resources/lib/download.py"
 textBoxesScript = "special://home/addons/plugin.video.bunkford/resources/lib/textBoxes.py"
 
@@ -121,9 +121,9 @@ def cleanUnicode(string):
 
 #START MAIN SCRIPT
 def STARTPOINT():
-        addDir('TV (http://iseri.es)',iseries_URL,10,'')
-        addDir('MOVIES (http://barwo.com)',barwo_URL,100,'')
-        addDir('MOVIES (http://bunnymovie.com)',bunny_URL,300,'')
+        addDir('TV (http://iseri.es)',iseries_URL,10,artdir+'iseries-logo.png')
+        addDir('MOVIES (http://barwo.com)',barwo_URL,100,artdir+'barwo-logo.png')
+        addDir('MOVIES (http://bunnymovie.com)',bunny_URL,300,artdir+'bunnymovie-logo.png')
 
 #BUNNYMOVIE.COM
 def bunny_LoginStartup():
@@ -141,9 +141,9 @@ def BUNNYMAIN():
      bunny_LoginStartup()
 
      #Name,URL,MODE,Image
-     addDir('GENRE',bunny_URL,311,'')
-     addDir('Recent MOVIES',bunny_URL,312,'')
-     addDir('Search MOVIES',bunny_URL,315,'')
+     addDir('GENRE',bunny_URL,311,artdir+'moviegenre-logo.png')
+     addDir('Recent MOVIES',bunny_URL,312,artdir+'movierecent-logo.png')
+     addDir('Search MOVIES',bunny_URL,315,artdir+'moviersearch-logo.png')
 
 def BUNNYGENRE():
         net.set_cookies(cookiejar)
@@ -298,9 +298,9 @@ def BARWOMAIN():
      barwo_LoginStartup()
 
      #Name,URL,MODE,Image
-     addDir('GENRE',barwo_URL,11,'')
-     addDir( 'Recent MOVIES',barwo_URL,112,'')
-     addDir('Search MOVIES',barwo_URL,315,'')
+     addDir('GENRE',barwo_URL,11,artdir+'moviegenre-logo.png')
+     addDir( 'Recent MOVIES',barwo_URL,112,artdir+'movierecent-logo.png')
+     addDir('Search MOVIES',barwo_URL,315,artdir+'moviesearch-logo.png')
 
 def BARWOGENRE():
         net.set_cookies(cookiejar)
@@ -420,9 +420,9 @@ def CATEGORIES():
         iseries_LoginStartup()
 
         #Name,URL,MODE,Image
-        addDir('TV Shows',iseries_URL+'/shows/',1,'')
-        addDir( 'Recent TV',iseries_URL,2,'')
-        addDir('Search TV',iseries_URL,4,'')
+        addDir('TV Shows',iseries_URL+'/shows/',1,artdir+'tvshows-logo.png')
+        addDir( 'Recent TV',iseries_URL,2,artdir+'tvrecent-logo.png')
+        addDir('Search TV',iseries_URL,4,artdir+'tvsearch-logo.png')
         #above works, need to parse returned data. not the same as movie sites               
 def INDEX(url):
         net.set_cookies(cookiejar)
