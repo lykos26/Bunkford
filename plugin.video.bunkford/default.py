@@ -408,17 +408,18 @@ def BARWOMOVIE(url,name):
 def iseries_LoginStartup():
       if _PLUG.get_setting('iseries-username') == '':
            xbmc.executebuiltin("Notification(Need to login!, Please visit http://iseri.es and sign up.)")
-                     
+              
       loginurl = iseries_LOGIN_URL
       login = _PLUG.get_setting('iseries-username')
       password = _PLUG.get_setting('iseries-password')
-      form = {'log' : login, 'pwd' : password, 'testcookie' : '1', 'redirect_to' : iseries_URL}
+      form = {'log' : login, 'pwd' : password }
       net.http_POST(loginurl, form,{'User-Agent':USER_AGENT})
       net.save_cookies(cookiejar)
+
       
 def CATEGORIES():
         iseries_LoginStartup()
-
+        
         #Name,URL,MODE,Image
         addDir('TV Shows',iseries_URL+'/shows/',1,artdir+'tvshows-logo.png')
         addDir( 'Recent TV',iseries_URL,2,artdir+'tvrecent-logo.png')
@@ -434,7 +435,7 @@ def INDEX(url):
         match=re.compile('<a href="http://iseri.es(.+?)" title=".+?">(.+?)</a>').findall(link)
         for url,name in match:
                 name = unescape(name)
-                addDir(name,iseries_URL+url,2,'')
+                addDir(name,iseries_URL+url,2,artdir+'tv-logo.png')
 
 def INDEX2(url,name):
         net.set_cookies(cookiejar)
@@ -443,6 +444,7 @@ def INDEX2(url,name):
         response = urllib2.urlopen(req)
         soup = BeautifulSoup(response.read())
         data = soup.findAll('article',attrs={'class':'post text_block clearfix'});
+        print soup
         for div in data:
             link = div.find('a')['href']
             image = div.find('img')['src']
@@ -481,11 +483,14 @@ def INDEX3(url,name):
         req.add_header('User-Agent',USER_AGENT)
         response = urllib2.urlopen(req)
         soup = BeautifulSoup(response.read())
+        print '-------------------> ' ,soup
         data = soup.findAll('a',href=re.compile('.mp4'));
+        print '-------------------> ' , data
         data = unicode.join(u'\n',map(unicode,data))
         link = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', data)
         link = unicode.join(u'\n',map(unicode,link))
         link = link.replace("&amp;","&")
+        print '-------------------> ' + link
         showtitle = soup.find('h1').contents[0]
         showtitle = showtitle.replace('&#8211;','-')
         
@@ -682,7 +687,7 @@ def addDir(name,url,mode,iconimage,meta=None):
         
         if meta is None:     
              liz=xbmcgui.ListItem(name, iconImage="DefaultFolder.png", thumbnailImage=iconimage)
-     
+             liz.setProperty('fanart_image', 'special://home/addons/plugin.video.bunkford/fanart.jpg')
         else:
 
              liz = xbmcgui.ListItem(name, iconImage=str(meta['cover_url']), thumbnailImage=str(meta['cover_url']))
