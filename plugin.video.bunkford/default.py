@@ -121,10 +121,20 @@ def cleanUnicode(string):
 
 #START MAIN SCRIPT
 def STARTPOINT():
-        addDir('TV (http://iseri.es)',iseries_URL,10,artdir+'iseries-logo.png')
-        addDir('MOVIES (http://barwo.com)',barwo_URL,100,artdir+'barwo-logo.png')
-        addDir('MOVIES (http://bunnymovie.com)',bunny_URL,300,artdir+'bunnymovie-logo.png')
-
+        if _PLUG.get_setting('iseries-username') is not '':
+             addDir('TV (http://iseri.es)',iseries_URL,10,artdir+'iseries-logo.png')
+        if _PLUG.get_setting('barwo-username') is not '':
+             addDir('MOVIES (http://barwo.com)',barwo_URL,100,artdir+'barwo-logo.png')
+        if _PLUG.get_setting('bunny-username') is not '':
+             addDir('MOVIES (http://bunnymovie.com)',bunny_URL,300,artdir+'bunnymovie-logo.png')
+        if _PLUG.get_setting('iseries-username') is '':
+             if _PLUG.get_setting('barwo-username') is '':
+                  if _PLUG.get_setting('bunny-username') is '':
+                         xbmc.executebuiltin("Notification(Need to login!, Plese set up login information.)")
+                         xbmc.executebuiltin("Addon.OpenSettings(plugin.video.bunkford)")
+                         
+             
+     
 #BUNNYMOVIE.COM
 def bunny_LoginStartup():
       if _PLUG.get_setting('bunny-username') == '':
@@ -159,7 +169,7 @@ def BUNNYGENRE():
 
                   name = a['href'][28:-1].capitalize()
                   name = unescape(name)
-                  addDir(name,a['href'],312,'')
+                  addDir(name,a['href'],312,artdir+'genre.png')
 
 def BUNNYGENRELIST(url,name):
         net.set_cookies(cookiejar)
@@ -189,7 +199,7 @@ def BUNNYGENRELIST(url,name):
         #LOAD MORE MOVIES
         next_post = soup.find('a',attrs={'class':'load-more-link no-ajax'})['rel'];
         if next_post != "#":
-             addDir(next_post,next_post,'312','') #adds dir listing for next page
+             addDir(next_post,next_post,'312',artdir+'more.png') #adds dir listing for next page
 
 def BUNNYMOVIE(url,name):
         net.set_cookies(cookiejar)
@@ -316,7 +326,7 @@ def BARWOGENRE():
                   total= a.find('span').contents[0] #total movies in genre
                   name = a['href'][23:].capitalize()+' '+total
                   name = unescape(name)
-                  addDir(name,a['href'],112,'')
+                  addDir(name,a['href'],112,artdir+'genre.png')
 
 def BARWOGENRELIST(url,name):
         net.set_cookies(cookiejar)
@@ -346,7 +356,7 @@ def BARWOGENRELIST(url,name):
         #LOAD MORE MOVIES
         next_post = soup.find('a',attrs={'class':'load-more-link no-ajax'})['rel'];
         if next_post != "#":
-             addDir(next_post,next_post,'112','') #adds dir listing for next page
+             addDir(next_post,next_post,'112',artdir+'more.png') #adds dir listing for next page
 
 def BARWOMOVIE(url,name):
         net.set_cookies(cookiejar)
@@ -475,7 +485,7 @@ def INDEX2(url,name):
         for div in more:
                 if div.find('a') is not None:
                         next_post = div.find('a')['href']
-                        addDir(next_post,next_post,'2','',meta=meta) #adds dir listing for next page
+                        addDir(next_post,next_post,'2',artdir+'more.png',meta=meta) #adds dir listing for next page
 
 def INDEX3(url,name):
         net.set_cookies(cookiejar)
@@ -483,14 +493,8 @@ def INDEX3(url,name):
         req.add_header('User-Agent',USER_AGENT)
         response = urllib2.urlopen(req)
         soup = BeautifulSoup(response.read())
-        print '-------------------> ' ,soup
-        data = soup.findAll('a',href=re.compile('.mp4'));
-        print '-------------------> ' , data
-        data = unicode.join(u'\n',map(unicode,data))
-        link = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', data)
-        link = unicode.join(u'\n',map(unicode,link))
-        link = link.replace("&amp;","&")
-        print '-------------------> ' + link
+        for elem in soup(text=re.compile(r'Play Now')):
+              link = elem.parent['href']
         showtitle = soup.find('h1').contents[0]
         showtitle = showtitle.replace('&#8211;','-')
         
@@ -534,9 +538,9 @@ def INDEX3(url,name):
         addLink(showtitle + ' - ' + name[1:-1],link,image,'tv',infoLabels=infoLabels,meta=meta) #adds link of episode
 
         if nextep is not None:
-             addDir('Next Episode',nextep,3,'',meta=meta)
+             addDir('Next Episode',nextep,3,artdir+'next.png',meta=meta)
         if prevep is not None:
-             addDir('Previous Episode',prevep,3,'',meta=meta)
+             addDir('Previous Episode',prevep,3,artdir+'previous.png',meta=meta)
 
 def SEARCHSITETV(url):
         keyboard = xbmc.Keyboard()
@@ -577,13 +581,13 @@ def SEARCHSITETV(url):
             for div in more:
                 next_post = div.find('a')['href']
                 if next_post != "#":
-                     addDir(next_post,next_post,'2','') #adds dir listing for next page
+                     addDir(next_post,next_post,'2',artdir+'more.png') #adds dir listing for next page
 
             more = soup.findAll('div',attrs={'class':'alignleft'});
             for div in more:
                     if div.find('a') is not None:
                             next_post = div.find('a')['href']
-                            addDir(next_post,next_post,'2','') #adds dir listing for next page
+                            addDir(next_post,next_post,'2',artdir+'more.png') #adds dir listing for next page
                  
             
              
@@ -620,6 +624,7 @@ def addLink(name,url,iconimage,mediaType=None,infoLabels=False,trailer=None,meta
 
         if meta is None:     
              liz=xbmcgui.ListItem(name, iconImage="DefaultVideo.png", thumbnailImage=iconimage)
+             liz.setProperty('fanart_image', 'special://home/addons/plugin.video.bunkford/fanart.jpg')
         else:
 
              liz = xbmcgui.ListItem(name, iconImage=str(meta['cover_url']), thumbnailImage=str(meta['cover_url']))
