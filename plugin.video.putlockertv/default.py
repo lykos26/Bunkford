@@ -16,8 +16,14 @@ else:
 #PutLockerTV - by bunkford 2013.
 
 # global constants
-USER_AGENT = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.3) Gecko/2008092417 Firefox/3.0.3'
-PUTLOCKERTV_REFERRER = 'http://putlockertvshows.com'
+USER_AGENT = "Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_0 like Mac OS X; en-us) AppleWebKit/532.9 (KHTML, like Gecko) Version/4.0.5 Mobile/8A293 Safari/6531.22.7"
+url = 'http://putlockertvshows.me'
+urllist = 'http://putlockertvshows.me/tv-shows.list.html'
+urlimages = 'http://putlockertvshows.me/p/'
+urlwatch = 'http://putlockertvshows.me/watch/'
+
+allurl = url + '/tv-shows-list.html'
+
 
 #get path to me
 putlockertvpath=os.getcwd()
@@ -37,6 +43,19 @@ transdowninfopath = xbmcpath(downinfopath,'')
 transmetapath = xbmcpath(metapath,'')
 translatedputlockertvdatapath = xbmcpath(putlockertvdatapath,'')
 art = putlockertvpath+'/resources/art'
+
+#Functions used in script
+
+def trim():
+    #gets list of good links to trim non working
+    goodlinks = []
+    req = urllib2.Request(allurl)
+    req.add_header('User-Agent',USER_AGENT)
+    response = urllib2.urlopen(req)
+    for link in BeautifulSoup(response.read(), parseOnlyThese=SoupStrainer('a', attrs={'class':'lc'})):
+        if link.has_attr('href'):
+            goodlinks.append(link['href'])
+    return goodlinks
 
 def f7(seq):
     seen = set()
@@ -138,32 +157,22 @@ def CATEGORIES():
         addDir('TV SHOWS','http://putlockertvshows.com/tv-shows-list.html',1,'')
                        
 def INDEX(url):
-        req = urllib2.Request(url)
-        req.add_header('User-Agent', USER_AGENT)
-        response = urllib2.urlopen(req)
-        link=response.read()
-        response.close()
-        match=re.compile('<a href="(.+?)" class="lc"> (.+?) </a>').findall(link)
-        for url,name in match:
-                meta = None
-                
-                if _PLT.get_setting('use-meta') == 'true':
-                     metaget=metahandlers.MetaData(translatedputlockertvdatapath)
-                     meta=metaget.get_meta('tvshow',name)
-                
+     goodones = trim()
+     print goodones
+     unkownlinks = []
+     req = urllib2.Request(urlimages)
+     req.add_header('User-Agent',USER_AGENT)
+     response = urllib2.urlopen(req)
+     soup = BeautifulSoup(response.read())
 
-                img_name = re.sub(' ', '-', name)
-                img_name = re.sub('[(){}<>::''..!!]','',img_name)
-                img_path = '/p/' + img_name + '.jpg'
-                img_path = img_path.lower()
-                
-                if meta is None:
-                     #add directories without meta
-                     addDir(name,PUTLOCKERTV_REFERRER+url,2,PUTLOCKERTV_REFERRER+img_path)
-                else:
-                     #add directories with meta
-                     addDir(name,PUTLOCKERTV_REFERRER+url,2,meta['cover_url'],metainfo=meta)
-
+     for a in soup.findAll('a', href=True):
+        if any(a['href'][:-4] in s for s in goodones):
+            image =  urlimages+ a['href']
+            name = a['href'].title().replace('-',' ')[:-4]
+            link = urlwatch + a['href'][:-4]+'/'
+            print image,name,link,'/n'
+            addDir(name,link,2,image)
+            
 def INDEX2(url,name):
         req = urllib2.Request(url)
         req.add_header('User-Agent', USER_AGENT)

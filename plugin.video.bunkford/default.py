@@ -1,6 +1,6 @@
 # -*- coding: cp1252 -*-
 import urllib,urllib2,re,xbmc,xbmcplugin,xbmcgui,xbmcaddon,sys,os,cookielib,htmlentitydefs,urlresolver
-from BeautifulSoup import BeautifulSoup
+from BeautifulSoup import BeautifulSoup, SoupStrainer
 from t0mm0.common.addon import Addon
 from t0mm0.common.net import Net
 from metahandler import metahandlers
@@ -49,6 +49,15 @@ barwo_LOGIN_URL = 'http://barwo.com/wp-login.php'
 bunny_URL = 'http://www.bunnymovie.com'
 bunny_LOGIN_URL = 'http://bunnymovie.com/wp-login.php'
 
+#muchmovies constants
+much_URL = 'http://www.muchmovies.org'
+
+#pulockertv constants
+putlocker_URL = 'http://www.putlockertvshows.me'
+urllist = putlocker_URL+ '/tv-shows.list.html'
+urlimages = putlocker_URL+ '/p/'
+urlwatch = putlocker_URL+ '/watch/'
+allurl = putlocker_URL + '/tv-shows-list.html'
 
 adatapath = 'special://profile/addon_data/plugin.video.bunkford'
 metapath = adatapath+'/mirror_page_meta_cache'
@@ -68,6 +77,22 @@ cookiejar = os.path.join(cookie_path,'losmovies.lwp')
 net = Net()
 
 # FUNCTIONS USED   
+
+def f7(seq):
+    #sorts list
+    seen = set()
+    seen_add = seen.add
+    return [ x for x in seq if x not in seen and not seen_add(x)]
+
+def trim():
+    #gets list of good links to trim non working
+    goodlinks = []
+    req = urllib2.Request(allurl)
+    req.add_header('User-Agent', USER_AGENT)
+    response = urllib2.urlopen(req)
+    for link in BeautifulSoup(response.read(), parseOnlyThese=SoupStrainer('a', attrs={'class':'lc'})):
+        goodlinks.append(link['href'])
+    return goodlinks
 
 def unescape(text):
 ##
@@ -123,6 +148,7 @@ def cleanUnicode(string):
 def STARTPOINT():
         if _PLUG.get_setting('iseries-username') is not '':
              addDir('TV (http://iseri.es)',iseries_URL,10,artdir+'iseries-logo.png')
+        addDir('TV (http://putlockertvshows.me)',putlocker_URL,900,artdir+'putlocker-logo.png')                 
         if _PLUG.get_setting('barwo-username') is not '':
              addDir('MOVIES (http://barwo.com)',barwo_URL,100,artdir+'barwo-logo.png')
         if _PLUG.get_setting('bunny-username') is not '':
@@ -132,8 +158,103 @@ def STARTPOINT():
                   if _PLUG.get_setting('bunny-username') is '':
                          xbmc.executebuiltin("Notification(Need to login!, Plese set up login information.)")
                          xbmc.executebuiltin("Addon.OpenSettings(plugin.video.bunkford)")
-                         
-             
+        #addDir('MOVIES (http://muchmovies.org)',much_URL,600,artdir+'muchmovies-logo.png')                 
+
+
+#PUTLOCKERTVSHOWS.ME
+def PUTLOCKERMAIN(url):
+    goodones = trim()
+    print goodones
+    req = urllib2.Request(urlimages)
+    req.add_header('User-Agent',USER_AGENT)
+    response = urllib2.urlopen(req)
+    soup = BeautifulSoup(response.read())
+    for a in soup.findAll('a', href=True):
+        if u'/watch/'+a['href'][:-4] in goodones:
+            image =  urlimages+ a['href']
+            name = a['href'].title().replace('-',' ')[:-4]
+            link = urlwatch + a['href'][:-4]+'/'
+            if len(name) > 0:
+                addDir(name,link,902,image)
+
+def PUTLOCKERSEASONS(url,name,iconimage):
+        req = urllib2.Request(url)
+        req.add_header('User-Agent', USER_AGENT)
+        response = urllib2.urlopen(req)
+        link=response.read()
+        response.close()
+        match=re.compile('<a href="/watch/.+?/s(.+?)e.+?.html" class="la">WATCH</a>').findall(link)
+        match.sort() # sort list so it shows season one first
+        match = f7(match)
+        for season in match:
+            meta = None
+            #getMeta(name=None,season=None,episode=None,year=None,imdbid=None,tvdbid=None):
+            try:
+                 meta = getMeta(name=name,season='0',episode='0') 
+            except:
+                 pass
+            addDir('Season '+season,url+'/',903,iconimage,meta=meta,season=season) #adds dir listing of episodes  
+
+def PUTLOCKERTVEPISODES(url,name,season,iconimage):
+        req = urllib2.Request(url)
+        req.add_header('User-Agent', USER_AGENT)
+        response = urllib2.urlopen(req)
+        link=response.read()
+        response.close()
+        season = str(season)
+        print 'SeaSon:'+season
+        match=re.compile('<a href="/watch/(.+?)/s'+season+'e(.+?).html" class="la">WATCH</a>').findall(link)
+        match.sort() # sort list so it shows first episode first
+     
+        for name,episode in match:
+                url = putlocker_URL+'/watch/'+name+'/s'+season+'e'+episode+'.html'         
+                name = re.sub('-', ' ', name)
+
+                meta = None
+                #getMeta(name=None,season=None,episode=None,year=None,imdbid=None,tvdbid=None):
+                try:
+                     meta = getMeta(name=name,season='0',episode='0') 
+                except:
+                     pass
+                addDir('S'+season+'E'+episode,url,904,iconimage,meta=meta) #adds dir listing of episodes 
+
+def PUTLOCKERPLAY(url,name,iconimage):
+        req = urllib2.Request(url)
+        req.add_header('User-Agent', USER_AGENT)
+        response = urllib2.urlopen(req)
+        link=response.read()
+        response.close()
+        match=re.compile('<iframe src="(.+?)" width="600" height="360" frameborder="0" scrolling="no"></iframe>').findall(link)
+        media_url = urlresolver.resolve(match[0]) 
+        for url in match:
+                #if url containt '/ifr/' then re-do video link with second url before resolving video link
+                if re.search('ifr', url):
+                        print 'iframe detected - more required'
+                        url = PUTLOCKERTV_REFERRER+url
+                        req = urllib2.Request(url)
+                        req.add_header('User-Agent', USER_AGENT)
+                        response = urllib2.urlopen(req)
+                        link=response.read()
+                        response.close()
+                        match=re.compile('<iframe src="(.+?)" width="600" height="360" frameborder="0" scrolling="no"></iframe>').findall(link)
+                        media_url = urlresolver.resolve(match[0]) 
+                        for url in match:
+                                url = urlresolver.HostedMediaFile(url=url).resolve()
+                else:
+                        url = urlresolver.HostedMediaFile(url=url).resolve()
+    
+                #xbmc.executebuiltin('XBMC.PlayMedia(%s)' % url) 
+                #addLink(name,url,'')
+                addLink(name,url,iconimage,'movie') #adds link of episode
+                
+#MUCHMOVIES.ORG
+def MUCHMAIN():
+     bunny_LoginStartup()
+
+     #Name,URL,MODE,Image
+     addDir('GENRE',bunny_URL+'/genres',611,artdir+'moviegenre-logo.png')
+     addDir('Recent MOVIES',bunny_URL+'/movies',612,artdir+'movierecent-logo.png')
+     addDir('Search MOVIES',bunny_URL+'/search',615,artdir+'moviesearch-logo.png')
      
 #BUNNYMOVIE.COM
 def bunny_LoginStartup():
@@ -153,7 +274,7 @@ def BUNNYMAIN():
      #Name,URL,MODE,Image
      addDir('GENRE',bunny_URL,311,artdir+'moviegenre-logo.png')
      addDir('Recent MOVIES',bunny_URL,312,artdir+'movierecent-logo.png')
-     addDir('Search MOVIES',bunny_URL,315,artdir+'moviersearch-logo.png')
+     addDir('Search MOVIES',bunny_URL,315,artdir+'moviesearch-logo.png')
 
 def BUNNYGENRE():
         net.set_cookies(cookiejar)
@@ -269,8 +390,6 @@ def SEARCHSITE(url):
 
             link = SearchMovie(search_string,url)
             soup = BeautifulSoup(link)
-            print soup.prettify
-
             
             data = soup.findAll('div',attrs={'class':'thumbnail'});
             for div in data:
@@ -454,7 +573,7 @@ def INDEX2(url,name):
         response = urllib2.urlopen(req)
         soup = BeautifulSoup(response.read())
         data = soup.findAll('article',attrs={'class':'post text_block clearfix'});
-        print soup
+        
         for div in data:
             link = div.find('a')['href']
             image = div.find('img')['src']
@@ -552,10 +671,8 @@ def SEARCHSITETV(url):
 
             link = Search(search_string,url)
             soup = BeautifulSoup(link)
-            print soup.prettify
             
             data = soup.findAll('article',attrs={'class':'post text_block clearfix'});
-            print data[0]
             for div in data:
                 link = div.find('a')['href']
                 image = div.find('img')['src']
@@ -679,7 +796,7 @@ def getMeta(name=None,season=None,episode=None,year=None,imdbid=None,tvdbid=None
                   meta=metaget.get_meta('movie',name,year=year)
         return meta
      
-def addDir(name,url,mode,iconimage,meta=None):
+def addDir(name,url,mode,iconimage,meta=None,season=None):
 
         
         #handle adding context menus
@@ -687,7 +804,7 @@ def addDir(name,url,mode,iconimage,meta=None):
         contextMenuItems.append(('HELP', "RunScript("+textBoxesScript+",HELP,"+helpText+")",))
 
         
-        u=sys.argv[0]+"?url="+urllib.quote_plus(url.encode('utf-8','ignore'))+"&mode="+str(mode)+"&name="+urllib.quote_plus(name.encode('utf-8','ignore'))
+        u=sys.argv[0]+"?url="+urllib.quote_plus(url.encode('utf-8','ignore'))+"&mode="+str(mode)+"&name="+urllib.quote_plus(name.encode('utf-8','ignore'))+ "&season="+str(season)+"&iconimage="+str(iconimage)
         ok=True
         
         if meta is None:     
@@ -728,10 +845,20 @@ def addDir(name,url,mode,iconimage,meta=None):
         
 #for passing parameters between menus              
 params=get_params()
+iconimage=None
+season=None
 url=None
 name=None
 mode=None
 
+try:
+        iconimage=urllib.unquote_plus(params["iconimage"])
+except:
+        pass
+try:
+        season=urllib.unquote_plus(params["season"])
+except:
+        pass
 try:
         url=urllib.unquote_plus(params["url"])
 except:
@@ -748,6 +875,8 @@ except:
 print "Mode: "+str(mode)
 print "URL: "+str(url)
 print "Name: "+str(name)
+print "Season: "+str(season)
+print "Iconimage: "+str(iconimage)
 
 #main exicution of menu navigation
 if mode==None or url==None or len(url)<1:
@@ -810,6 +939,24 @@ elif mode==4:
         print""
         SEARCHSITETV(url)
 
+elif mode==600:
+        print""
+        MUCHMAIN()
+        
+elif mode==900:
+        print""
+        PUTLOCKERMAIN(url)
 
+elif mode==902:
+        print""
+        PUTLOCKERSEASONS(url,name,iconimage)
+
+elif mode==903:
+        print""
+        PUTLOCKERTVEPISODES(url,name,season,iconimage)
+        
+elif mode==904:
+        print""
+        PUTLOCKERPLAY(url,name,iconimage)
 
 xbmcplugin.endOfDirectory(int(sys.argv[1]))

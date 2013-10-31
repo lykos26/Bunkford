@@ -1,5 +1,5 @@
 [b]v1.4.5[/b]
-  Minor updates
+  Lots of updates, added support for putlockertvshows.{com|me}. This will replace my other addon.
 
 [b]v1.4.3[/b]
   Added some artwork, even if it's not that good.. ;) Can't be good at everything!
