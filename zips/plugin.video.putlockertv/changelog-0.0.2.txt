@@ -1,6 +1,0 @@
-[B]1.0.1[/B]
-  - Total rewrite so it's faster and scrapes more information from site. Good initial response to script.
-
-[B]1.0.0[/B]
-
-  - Everything - initial testing release

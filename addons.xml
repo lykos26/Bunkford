@@ -73,24 +73,6 @@
   </extension>
 </addon>
 
-<addon id="plugin.video.putlockertv" name="PutLockerTV" provider-name="bunkford" version="0.0.2">
-    <requires>
-        <import addon="xbmc.python" version="2.0"/>
-        <import addon="script.module.urlresolver"  version="1.0.0"/>
-		<import addon="script.module.metahandler"  version="1.0.0"/>
-    </requires>
-  <extension library="default.py" point="xbmc.python.pluginsource">
-        <provides>video</provides>
-  </extension>
-  <extension point="xbmc.addon.metadata">
-	<summary lang="en">Putlocker TV plugin</summary>
-    <description lang="en">Plugin that lets you browse and play TV shows from putlocker!</description>
-    <disclaimer lang="en">Some parts of this addon may not be legal in your country of residence - please check with your local laws before installing.</disclaimer>
-    <platform>all</platform>
-    <language />
-  </extension>
-</addon>
-
 <addon id="plugin.video.tvlinks" name="TVLinks.cc" provider-name="bunkford" version="0.1.1">
     <requires>
         <import addon="xbmc.python" version="2.0"/>

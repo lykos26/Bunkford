@@ -1,5 +1,0 @@
-<settings>
-   <category label="Meta Data">
-  	<setting id="use-meta" type="bool" label="Use Meta Data" default="true"/>
-   </category>
-</settings>
