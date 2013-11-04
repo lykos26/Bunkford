@@ -285,7 +285,7 @@ def PUTLOCKERPLAY(url,name,iconimage):
     
                 #xbmc.executebuiltin('XBMC.PlayMedia(%s)' % url) 
                 #addLink(name,url,'')
-                addLink(name,url,iconimage,'tvshow',meta=meta) #adds link of episode
+                addLink(name,url,iconimage,'tv',meta=meta) #adds link of episode
                 
 #MUCHMOVIES.ORG
 def MUCHMAIN():
