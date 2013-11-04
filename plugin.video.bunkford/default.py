@@ -1,5 +1,5 @@
 # -*- coding: cp1252 -*-
-import urllib,urllib2,re,xbmc,xbmcplugin,xbmcgui,xbmcaddon,sys,os,cookielib,htmlentitydefs,urlresolver
+import urllib,urllib2,re,xbmc,xbmcplugin,xbmcgui,xbmcaddon,sys,os,cookielib,htmlentitydefs,urlresolver,requests
 from BeautifulSoup import BeautifulSoup, SoupStrainer
 from t0mm0.common.addon import Addon
 from t0mm0.common.net import Net
@@ -76,6 +76,37 @@ cookie_path = os.path.join(datapath)
 cookiejar = os.path.join(cookie_path,'losmovies.lwp')
 net = Net()
 
+
+# INVITES PROGRAM
+# NEED TO CHECK IF ITS BEEN RUN IN THE LAST 24 HRS BY CHECKING TIME STAMP OF FILE
+# NEED TO POST DATA TO SITE AND PARSE RETURNED DATA
+# ** ADD REQUESTS TO ADDON.XML REQUIRES
+#BELOW DOESNT WORK. 
+def invite(sites):
+    
+    url = 'http://barnboard.ca/barn2/request.php'
+    
+    values = { 'site': sites }
+    
+    r = requests.post(url, data=values)
+
+    print r.text
+    q = re.compile('<EMAIL>(.+?)</EMAIL>')
+    m = q.search(r.text)
+    if m: link = m.group(1)
+    else: link = None
+    
+    if 'Success' in r.text:
+        print '[MegaMeshNetwork]: File uploaded successfully!'
+        print '[MegaMeshNetwork]: Email: ' , link
+    else:
+        q = re.compile('<message>(.+?)</message>')
+        m = q.search(r.text)
+        if m: error = m.group(1)
+        else: error = None
+        print '[MegaMeshNetwork]: Error: ' , error
+#invite('iseries')
+
 # FUNCTIONS USED   
 
 def f7(seq):
@@ -148,7 +179,7 @@ def cleanUnicode(string):
 def STARTPOINT():
         if _PLUG.get_setting('iseries-username') is not '':
              addDir('TV (http://iseri.es)',iseries_URL,10,artdir+'iseries-logo.png')
-        addDir('TV (http://putlockertvshows.me)',putlocker_URL,900,artdir+'putlocker-logo.png')                 
+        addDir('TV (http://putlockertvshows.me)',putlocker_URL,900,artdir+'putlockertv-logo.png')                 
         if _PLUG.get_setting('barwo-username') is not '':
              addDir('MOVIES (http://barwo.com)',barwo_URL,100,artdir+'barwo-logo.png')
         if _PLUG.get_setting('bunny-username') is not '':
@@ -225,23 +256,27 @@ def PUTLOCKERPLAY(url,name,iconimage):
         link=response.read()
         response.close()
         match=re.compile('<iframe src="(.+?)" width="600" height="360" frameborder="0" scrolling="no"></iframe>').findall(link)
-        media_url = urlresolver.resolve(match[0]) 
+        media_url = urlresolver.resolve(match[0])
+        print media_url
         for url in match:
                 #if url containt '/ifr/' then re-do video link with second url before resolving video link
                 if re.search('ifr', url):
-                        print 'iframe detected - more required'
-                        url = PUTLOCKERTV_REFERRER+url
+                        print 'iframe detected - more required: ' + url
+                        url = url.replace('ifr/','ifr/vid/') # need to add vid to help with add clicking thingy
+                        print 'iframe detected - more completed: ' + url
+                        url = putlocker_URL + url
                         req = urllib2.Request(url)
                         req.add_header('User-Agent', USER_AGENT)
                         response = urllib2.urlopen(req)
                         link=response.read()
-                        response.close()
                         match=re.compile('<iframe src="(.+?)" width="600" height="360" frameborder="0" scrolling="no"></iframe>').findall(link)
                         media_url = urlresolver.resolve(match[0]) 
                         for url in match:
                                 url = urlresolver.HostedMediaFile(url=url).resolve()
+                                print 'final play url: ' + url
                 else:
                         url = urlresolver.HostedMediaFile(url=url).resolve()
+                        print 'final play url: ' + url
     
                 #xbmc.executebuiltin('XBMC.PlayMedia(%s)' % url) 
                 #addLink(name,url,'')
@@ -743,7 +778,6 @@ def addLink(name,url,iconimage,mediaType=None,infoLabels=False,trailer=None,meta
              liz=xbmcgui.ListItem(name, iconImage="DefaultVideo.png", thumbnailImage=iconimage)
              liz.setProperty('fanart_image', 'special://home/addons/plugin.video.bunkford/fanart.jpg')
         else:
-
              liz = xbmcgui.ListItem(name, iconImage=str(meta['cover_url']), thumbnailImage=str(meta['cover_url']))
 
 
@@ -801,7 +835,7 @@ def addDir(name,url,mode,iconimage,meta=None,season=None):
         
         #handle adding context menus
         contextMenuItems = []
-        contextMenuItems.append(('HELP', "RunScript("+textBoxesScript+",HELP,"+helpText+")",))
+        contextMenuItems.append(('Help', "RunScript("+textBoxesScript+",HELP,"+helpText+")",))
 
         
         u=sys.argv[0]+"?url="+urllib.quote_plus(url.encode('utf-8','ignore'))+"&mode="+str(mode)+"&name="+urllib.quote_plus(name.encode('utf-8','ignore'))+ "&season="+str(season)+"&iconimage="+str(iconimage)
@@ -811,7 +845,7 @@ def addDir(name,url,mode,iconimage,meta=None,season=None):
              liz=xbmcgui.ListItem(name, iconImage="DefaultFolder.png", thumbnailImage=iconimage)
              liz.setProperty('fanart_image', 'special://home/addons/plugin.video.bunkford/fanart.jpg')
         else:
-
+             contextMenuItems.append(('Show Information', 'XBMC.Action(Info)',))
              liz = xbmcgui.ListItem(name, iconImage=str(meta['cover_url']), thumbnailImage=str(meta['cover_url']))
 
 

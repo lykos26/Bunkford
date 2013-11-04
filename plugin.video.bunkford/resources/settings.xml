@@ -1,10 +1,10 @@
 <settings>
 <category label="WELCOME!">
+<setting id="invites" type="bool" label="Participate in invite sharing:" default="True" />
 <setting label="NOTICE:" type="lsep"/>
 <setting type="sep"/>
 <setting label="Go to http://iseri.es/wp-login.php?action=register to register for iseri.es" type="lsep"/>
 <setting label="Go to http://barwo.com/wp-login.php?action=register to register for barwo.com" type="lsep"/>
-<setting label="" type="lsep"/>
 <setting label="" type="lsep"/>
 <setting label="*** barwo.com is changing to bunnymovie.com" type="lsep"/>
 <setting label="Go to http://bunnymovie.com/wp-login.php?action=register to register now..." type="lsep"/>
