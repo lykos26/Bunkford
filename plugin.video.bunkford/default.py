@@ -257,7 +257,12 @@ def PUTLOCKERPLAY(url,name,iconimage):
         response.close()
         match=re.compile('<iframe src="(.+?)" width="600" height="360" frameborder="0" scrolling="no"></iframe>').findall(link)
         media_url = urlresolver.resolve(match[0])
-        print media_url
+        meta = None
+        #getMeta(name=None,season=None,episode=None,year=None,imdbid=None,tvdbid=None):
+        try:
+             meta = getMeta(name=name,season='0',episode='0') 
+        except:
+             pass
         for url in match:
                 #if url containt '/ifr/' then re-do video link with second url before resolving video link
                 if re.search('ifr', url):
@@ -280,7 +285,7 @@ def PUTLOCKERPLAY(url,name,iconimage):
     
                 #xbmc.executebuiltin('XBMC.PlayMedia(%s)' % url) 
                 #addLink(name,url,'')
-                addLink(name,url,iconimage,'movie') #adds link of episode
+                addLink(name,url,iconimage,'tvshow',meta=meta) #adds link of episode
                 
 #MUCHMOVIES.ORG
 def MUCHMAIN():

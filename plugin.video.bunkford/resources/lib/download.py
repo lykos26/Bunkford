@@ -10,7 +10,10 @@ url = sys.argv[1]
 downloadpath = sys.argv[2]
 name = sys.argv[3]
 
-filename = name + '.mp4'
+if 'putlocker' in url:
+    filename = name + '.flv'
+else:
+    filename = name + '.mp4'
 
 print filename
 downloadfile = downloadpath+filename
