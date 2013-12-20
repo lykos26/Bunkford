@@ -11,7 +11,8 @@ except:
 else:
      xbmc_imported = True
 
-
+##TODO:
+# ADD CHECKPTS ERROR HANDELING
 
 
 
@@ -48,7 +49,7 @@ cookie_path = os.path.join(datapath)
 art = TVLinkspath+'/resources/art'
 cookiejar = os.path.join(cookie_path,'losmovies.lwp')
 net = Net()
-
+downloadScript = "special://home/addons/plugin.video.tvlinks/resources/lib/download.py"
 
 def LoginStartup():
       if _PLT.get_setting('TVLinks-username') == '':
@@ -192,7 +193,7 @@ def CATEGORIES():
              addDir('TV Shows',TVLinks_REFERRER+'/tvlist/',100,'',kind='tvshows')
              addDir('Movies',TVLinks_REFERRER+'/movielist/',100,'',kind='movies')
              addDir('Search All',TVLinks_REFERRER+'/search.php',200,'',kind='all')
-        
+        addDir('Viewing Log',TVLinks_REFERRER+'/membercenter.php?sub=history',900,'')
 
 def SEARCHSITE(url,kind='all'):
         keyboard = xbmc.Keyboard()
@@ -280,8 +281,12 @@ def FREEMOVIES(url,kind):
         addDir('Genre',TVLinks_REFERRER,300,'',kind=t)
         if kind == 'tvshows':
              addDir('Latest Episodes',TVLinks_REFERRER+'/tvtoplist.htm',201,'')
+             addDir('Recently Added TV Shows',TVLinks_REFERRER+'/tv.htm',280,'')
+             addDir('Top TV Shows',TVLinks_REFERRER+'/tv.htm',281,'')
         if kind == 'movies':
              addDir('Popular Movies',TVLinks_REFERRER+'/movietoplist.htm',201,'')
+             addDir('Recently Added Movies',TVLinks_REFERRER+'/movie.htm',250,'')
+             addDir('Hot Movies',TVLinks_REFERRER+'/movie.htm',251,'')
         addDir('Search',TVLinks_REFERRER+'/search.php',200,'',kind=t)
 
 
@@ -425,6 +430,12 @@ def INDEX2(url,name):
         link = response.read()
         response.close()
         match = re.compile('code=(.+?)/').findall(link)
+        regexp = re.compile(r'\((.+?)\)')
+        if regexp.search(name) is not None:
+            mediatype = "movie"
+        else:
+            mediatype = "tv"
+            
         for code in match:
              code = code[:-1]
              #get play link
@@ -436,13 +447,197 @@ def INDEX2(url,name):
              link = response.read()
              #turn play link into usable url
              link = link.replace(".cc/",".cc/newipad.mp4?url=")
-             addLink(name,link,cover)
+             addLink(name,link,cover,mediaType=mediatype)
 
+def VIEWLOG(url):
+        net.set_cookies(cookiejar)
+        req = urllib2.Request(url)
+        req.add_header('User-Agent', USER_AGENT)
+        response = urllib2.urlopen(req)
+        link=response.read()
+        response.close()
+        match=re.compile('<a href="/(shows|movies)/(.+?)" target="_blank">(.+?)</a>').findall(link)
+        match2=re.compile('<a class="p_redirect" href="(.+?)" title="(.+?)"').findall(link)
+        #<a href="/shows/20130124/771" target="_blank">Legit Season 1x11</a>
+        for mediatype, url, name in match:
 
+                meta = None
+                url = "/"+mediatype+"/"+url
+                if _PLT.get_setting('use-meta') == 'true':
+                     metaget=metahandlers.MetaData(translatedTVLinksdatapath)
+                     meta=metaget.get_meta('movie',name)
 
-        
+                if 'shows' in url:
+                     mode = 22 #if tv show, search for episodes
+                     extention = '/url.js'
+                else:
+                     mode = 2 #if movie, serve up play link
+                     extention = '/play.htm'
 
-                
+                if meta is None:
+                     #add directories without meta
+                     addDir(name,TVLinks_REFERRER+url+extention,mode,'')
+                else:
+                     #add directories with meta
+                     addDir(name,TVLinks_REFERRER+url+extention,mode,meta['cover_url'],metainfo=meta)
+
+        #Next/Previous
+        for url, name in match2:
+                 addDir(name,TVLinks_REFERRER+'/membercenter.php'+url,900,'')
+
+def NEWMOVIES(url):
+        net.set_cookies(cookiejar)
+        req = urllib2.Request(url)
+        req.add_header('User-Agent', USER_AGENT)
+        response = urllib2.urlopen(req)
+        link=response.read()
+        response.close()
+        match=re.compile('<a href="(.+?)" title="(.+?)">.+?&nbsp;\((.+?)\)</a>').findall(link)
+        #<a href="/movies/20131218/105731" title="The Grudge">The Grudge&nbsp;(2004)</a>
+        counter = 0
+
+        for url, name, year in match:
+
+                counter += 1
+                if (counter is 40):
+                     break
+                meta = None
+                year = " ("+year+")"
+                if _PLT.get_setting('use-meta') == 'true':
+                     metaget=metahandlers.MetaData(translatedTVLinksdatapath)
+                     meta=metaget.get_meta('movie',name,year=year[2:-1])
+
+                if 'shows' in url:
+                     mode = 22 #if tv show, search for episodes
+                     extention = '/url.js'
+                else:
+                     mode = 2 #if movie, serve up play link
+                     extention = '/play.htm'
+
+                if meta is None:
+                     #add directories without meta
+                     addDir(name+year,TVLinks_REFERRER+url+extention,mode,'')
+                else:
+                     #add directories with meta
+                     addDir(name+year,TVLinks_REFERRER+url+extention,mode,meta['cover_url'],metainfo=meta)
+
+def HOTMOVIES(url):
+        net.set_cookies(cookiejar)
+        req = urllib2.Request(url)
+        req.add_header('User-Agent', USER_AGENT)
+        response = urllib2.urlopen(req)
+        link=response.read()
+        response.close()
+        match=re.compile('<a href="(.+?)" title="(.+?)">.+?&nbsp;\((.+?)\)</a>').findall(link)
+        #<a href="/movies/20131218/105731" title="The Grudge">The Grudge&nbsp;(2004)</a>
+        counter = 0
+
+        for url, name, year in match:
+
+                counter += 1
+                if (counter > 39): 
+                          
+                     meta = None
+                     year = " ("+year+")"
+                     if _PLT.get_setting('use-meta') == 'true':
+                          metaget=metahandlers.MetaData(translatedTVLinksdatapath)
+                          meta=metaget.get_meta('movie',name,year=year[2:-1])
+
+                     if 'shows' in url:
+                          mode = 22 #if tv show, search for episodes
+                          extention = '/url.js'
+                     else:
+                          mode = 2 #if movie, serve up play link
+                          extention = '/play.htm'
+
+                     if meta is None:
+                          #add directories without meta
+                          addDir(name+year,TVLinks_REFERRER+url+extention,mode,'')
+                     else:
+                          #add directories with meta
+                          addDir(name+year,TVLinks_REFERRER+url+extention,mode,meta['cover_url'],metainfo=meta)   
+
+def NEWTVSHOWS(url):
+        net.set_cookies(cookiejar)
+        req = urllib2.Request(url)
+        req.add_header('User-Agent', USER_AGENT)
+        response = urllib2.urlopen(req)
+        link=response.read()
+        response.close()
+        match=re.compile('<a href="(.+?)" title="(.+?)">').findall(link)
+        #<a href="/shows/20131110/939" title="Ground Floor">Ground Floor</a>
+        counter = 0
+
+        for url, name in match:
+
+                counter += 1
+                if (counter is 39):
+                     break
+                if (counter is 2):
+                     continue
+                if (counter is 4):
+                     continue
+                    
+                meta = None
+                year = ''
+                if _PLT.get_setting('use-meta') == 'true':
+                     metaget=metahandlers.MetaData(translatedTVLinksdatapath)
+                     meta=metaget.get_meta('movie',name,year=year[2:-1])
+
+                if 'shows' in url:
+                     mode = 22 #if tv show, search for episodes
+                     extention = '/url.js'
+                else:
+                     mode = 2 #if movie, serve up play link
+                     extention = '/play.htm'
+
+                if meta is None:
+                     #add directories without meta
+                     addDir(name+year,TVLinks_REFERRER+url+extention,mode,'')
+                else:
+                     #add directories with meta
+                     addDir(name+year,TVLinks_REFERRER+url+extention,mode,meta['cover_url'],metainfo=meta)
+
+def TOPTVSHOWS(url):
+        net.set_cookies(cookiejar)
+        req = urllib2.Request(url)
+        req.add_header('User-Agent', USER_AGENT)
+        response = urllib2.urlopen(req)
+        link=response.read()
+        response.close()
+        match=re.compile('<a href="(.+?)" title="(.+?)">').findall(link)
+        #<a href="/shows/20131110/939" title="Ground Floor">Ground Floor</a>
+        counter = 0
+
+        for url, name in match:
+
+                counter += 1
+                if (counter > 34):
+                    
+                     if (counter is 36):
+                          continue
+                     if (counter is 38):
+                          continue
+                         
+                     meta = None
+                     year = ''
+                     if _PLT.get_setting('use-meta') == 'true':
+                          metaget=metahandlers.MetaData(translatedTVLinksdatapath)
+                          meta=metaget.get_meta('movie',name,year=year[2:-1])
+
+                     if 'shows' in url:
+                          mode = 22 #if tv show, search for episodes
+                          extention = '/url.js'
+                     else:
+                          mode = 2 #if movie, serve up play link
+                          extention = '/play.htm'
+
+                     if meta is None:
+                          #add directories without meta
+                          addDir(name+year,TVLinks_REFERRER+url+extention,mode,'')
+                     else:
+                          #add directories with meta
+                          addDir(name+year,TVLinks_REFERRER+url+extention,mode,meta['cover_url'],metainfo=meta)                     
 def get_params():
         param=[]
         paramstring=sys.argv[2]
@@ -464,8 +659,14 @@ def get_params():
 
 
 
-def addLink(name,url,iconimage):
+def addLink(name,url,iconimage,mediaType=None):
         ok=True
+        downloadPath = _PLT.get_setting(mediaType+'downpath')
+        
+        #handle adding context menus
+        contextMenuItems = []
+        contextMenuItems.append(('Show Information', 'XBMC.Action(Info)',))
+        contextMenuItems.append(('Download Video', "RunScript("+downloadScript+","+url.encode('utf-8','ignore')+","+downloadPath+","+name+","+mediaType+")",))
         win = xbmcgui.Window(10000)
         win.setProperty('1ch.playing.title', name)
         win.setProperty('1ch.playing.year', '2069')
@@ -474,9 +675,13 @@ def addLink(name,url,iconimage):
         win.setProperty('1ch.playing.episode', name[5:6])
         liz=xbmcgui.ListItem(name, iconImage="DefaultVideo.png", thumbnailImage=iconimage)
         liz.setInfo( type="Video", infoLabels={ "Title": name } )
+        if contextMenuItems:
+           #print str(contextMenuItems)
+           liz.addContextMenuItems(contextMenuItems, replaceItems=True)
         ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=url,listitem=liz)
         return ok
-        
+
+    
               
 params=get_params()
 url=None
@@ -551,9 +756,29 @@ elif mode==200:
 elif mode==201:
         print ""+url
         LATEST(url)
+        
+elif mode==250:
+        print ""+url
+        NEWMOVIES(url)
+
+elif mode==251:
+        print ""+url
+        HOTMOVIES(url)
+
+elif mode==280:
+        print ""+url
+        NEWTVSHOWS(url)
+
+elif mode==281:
+        print ""+url
+        TOPTVSHOWS(url)
 
 elif mode==300:
         print ""+url
         GENRES(url,kind)
+
+elif mode==900:
+        print ""+url
+        VIEWLOG(url)
         
 xbmcplugin.endOfDirectory(int(sys.argv[1]))

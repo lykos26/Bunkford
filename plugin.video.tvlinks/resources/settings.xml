@@ -7,4 +7,9 @@
 	<setting id="TVLinks-password" type="text" label="Password:" default="" option="hidden"/>
 	<setting id="TVLinks-premium" type="bool" label="Premium Account:" default="False" />
    </category>
+   <category label="Download Locations">
+	 <setting label="TV download location:" type="folder" id="tvdownpath" option="writeable" />
+	 <setting type="sep"/>
+	 <setting label="Movie download location:" type="folder" id="moviedownpath" ption="writeable" />
+	</category>
 </settings>
