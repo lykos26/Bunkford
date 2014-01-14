@@ -650,7 +650,6 @@ def HOTMOVIES(url):
                      meta = None
                      year = " ("+year+")"
 
-
                      if 'shows' in url:
                           mode = 22 #if tv show, search for episodes
                           extention = '/url.js'
@@ -661,10 +660,10 @@ def HOTMOVIES(url):
 
                      if meta is None:
                           #add directories without meta
-                          addDir(name+year,TVLinks_REFERRER+url+extention,mode,'')
+                          addDir(name+year,TVLinks_REFERRER+'/'+url+extention,mode,'')
                      else:
                           #add directories with meta
-                          addDir(name+year,TVLinks_REFERRER+url+extention,mode,meta['cover_url'],metainfo=meta)   
+                          addDir(name+year,TVLinks_REFERRER+'/'+url+extention,mode,meta['cover_url'],metainfo=meta)   
 
 def NEWTVSHOWS(url):
         net.set_cookies(cookiejar)
