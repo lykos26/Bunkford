@@ -461,6 +461,11 @@ def INDEXTV(url,name):
                      #METACRAP
                      #getMeta(name=None,season=None,episode=None,year=None,imdbid=None,tvdbid=None):
                      try:
+                          name = name.replace("[TV SHOW] ","")
+                     except:
+                          pass
+                         
+                     try:
                           SeasonLocation=name.index('Season')
                      except:
                           SeasonLocation=0
@@ -509,7 +514,8 @@ def INDEX2(url,name):
             meta = getMeta(name=name[:-6],year=name[-5:-1])
         else:
             mediatype = "tv"
-            
+            Meta = None
+            meta = getMeta(name=name[:name.index('- Season')-1],season='0',episode='0')
         for code in match:
              code = code[:-1]
              #get play link
@@ -521,6 +527,8 @@ def INDEX2(url,name):
              link = response.read()
              #turn play link into usable url
              link = link.replace(".cc/",".cc/newipad.mp4?url=")
+             
+             
 
              if meta is None:
                   addLink(name,link,cover,mediaType=mediatype)
