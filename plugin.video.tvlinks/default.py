@@ -104,6 +104,66 @@ def cleanUnicode(string):
 def inLibraryMode():
     return xbmc.getCondVisibility("[Window.IsActive(videolibrary)]")
 
+def addLink(name,url,iconimage,mediaType=None,metainfo=False):
+        meta = metainfo
+        downloadPath = _PLT.get_setting(mediaType+'downpath')
+
+        #encode url and name, so they can pass through the sys.argv[0] related strings
+        sysname = urllib.quote_plus(name)
+        sysurl = urllib.quote_plus(url)
+        dirmode=mode
+         
+        u = sys.argv[0] + "?url=" + sysurl  + "&name=" + sysname + "&season="+str(season) + "&kind="+str(kind)
+        ok = True
+        #handle adding context menus
+        contextMenuItems = []
+        contextMenuItems.append(('Show Information', 'XBMC.Action(Info)',))
+        contextMenuItems.append(('Download Video', "RunScript("+downloadScript+","+url.encode('utf-8','ignore')+","+downloadPath+","+name+","+mediaType+")",))
+        if meta == False:
+             liz=xbmcgui.ListItem(name, iconImage=iconimage, thumbnailImage=iconimage)
+             liz.setInfo( type="Video", infoLabels={ "Title": name } )
+        else:
+             print '----------------------------> metaCAUght!'
+             liz = xbmcgui.ListItem(name, iconImage=str(meta['cover_url']), thumbnailImage=str(meta['cover_url']))
+
+
+             #liz.setInfo('video', infoLabels=meta)
+             liz.setProperty('fanart_image', meta['backdrop_url'])
+
+                
+             infoLabels = {}
+             infoLabels['title'] = name
+             infoLabels['plot'] = cleanUnicode(meta['plot']) # to-check if we need cleanUnicode
+             infoLabels['duration'] = str(meta['duration'])
+             #infoLabels['premiered'] = str(meta['premiered'])
+             infoLabels['mpaa'] = str(meta['mpaa'])
+             infoLabels['code'] = str(meta['imdb_id'])
+             infoLabels['rating'] = float(meta['rating'])
+             #infoLabels['overlay'] = meta['watched'] # watched 7, unwatched 6
+
+            
+             
+             try:
+                     trailer_id = re.match('^[^v]+v=(.{11}).*', meta['trailer_url']).group(1)
+                     infoLabels['trailer'] = "plugin://plugin.video.youtube/?action=play_video&videoid=%s" % trailer_id
+             except:
+                     infoLabels['trailer'] = ''
+             
+             if meta.has_key('season_num'):
+                 infoLabels['Episode'] = int(meta['episode_num'])
+                 infoLabels['Season'] =int(meta['season_num'])
+                 print 'No refresh for episodes yet'
+                   
+             
+             liz.setInfo(type="Video", infoLabels=infoLabels)
+        if contextMenuItems:
+           #print str(contextMenuItems)
+           liz.addContextMenuItems(contextMenuItems, replaceItems=True)
+           
+        ok = xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=url,listitem=liz)
+        #ok = xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=u, listitem=liz, isFolder=True)
+        return ok
+
 def addDir(name, url, mode, iconimage, metainfo=False, total=False, season=None, kind=None, cover=None):
     if xbmc_imported:
          meta = metainfo
@@ -135,10 +195,7 @@ def addDir(name, url, mode, iconimage, metainfo=False, total=False, season=None,
              liz.setInfo(type="Video", infoLabels={"Title": name})
 
          else:
-             
-             if meta.has_key('watched') == False :
-                 meta['watched']=6
-                 
+                             
              liz = xbmcgui.ListItem(name, iconImage=str(meta['cover_url']), thumbnailImage=str(meta['cover_url']))
 
 
@@ -150,7 +207,7 @@ def addDir(name, url, mode, iconimage, metainfo=False, total=False, season=None,
              infoLabels['title'] = name
              infoLabels['plot'] = cleanUnicode(meta['plot']) # to-check if we need cleanUnicode
              infoLabels['duration'] = str(meta['duration'])
-             infoLabels['premiered'] = str(meta['premiered'])
+             #infoLabels['premiered'] = str(meta['premiered'])
              infoLabels['mpaa'] = str(meta['mpaa'])
              infoLabels['code'] = str(meta['imdb_id'])
              infoLabels['rating'] = float(meta['rating'])
@@ -209,16 +266,24 @@ def SEARCHSITE(url,kind='all'):
                 total = len(match) 
                 meta = None
                 predir = None
-                
+
                 if 'shows' in url:
+                     #METACRAP
                      mode = 22 #if tv show, search for episodes
                      extention = '/url.js'
                      predir = '[TV SHOW] '
-                     
+                     #getMeta(name=None,season=None,episode=None,year=None,imdbid=None,tvdbid=None):
+                     meta = getMeta(name=name,season='0',episode='0')
                 else:
                      mode = 2 #if movie, serve up play link
                      extention = '/play.htm'
                      predir = '[MOVIE] '
+                     name = name.replace('&nbsp;',' ') #if movie show name with year
+                     metaname=name[:-5]
+                     year = name[len(name)-5:-1]
+                     #getMeta(name=None,season=None,episode=None,year=None,imdbid=None,tvdbid=None):
+                     meta = getMeta(name=metaname,year=year)
+     
                      
                 #if not premium account only show search results for movies that are 2008 or older
                 if _PLT.get_setting('TVLinks-premium') == 'false': 
@@ -311,9 +376,6 @@ def INDEX(url):
 
                 meta = None
                 
-                if _PLT.get_setting('use-meta') == 'true':
-                     metaget=metahandlers.MetaData(translatedTVLinksdatapath)
-                     meta=metaget.get_meta('movie',name,year=year[2:-1])
 
                 if 'shows' in url:
                      mode = 22 #if tv show, search for episodes
@@ -341,9 +403,6 @@ def LATEST(url):
 
                 meta = None
                 
-                if _PLT.get_setting('use-meta') == 'true':
-                     metaget=metahandlers.MetaData(translatedTVLinksdatapath)
-                     meta=metaget.get_meta('movie',name,year=year[2:-1])
 
                 if 'shows' in url:
                      mode = 22 #if tv show, search for episodes
@@ -352,6 +411,7 @@ def LATEST(url):
                      mode = 2 #if movie, serve up play link
                      extention = '/play.htm'
                      name = name2.replace('&nbsp;',' ') #if movie show name with year
+                     meta=getMeta(name[:-7],year=name[-5:-1])
 
                 if meta is None:
                      #add directories without meta
@@ -361,7 +421,7 @@ def LATEST(url):
                      addDir(name,TVLinks_REFERRER+url+extention,mode,meta['cover_url'],metainfo=meta)
                     
      
-def INDEXTV(url):
+def INDEXTV(url,name):
         #net.set_cookies(cookiejar)
         showurl = url[:-7]
         req = urllib2.Request(showurl)
@@ -385,7 +445,7 @@ def INDEXTV(url):
                           season = str(find_between(rs[i],'[',']'))
                      episode=''
                      url=''
-                     name=''
+                     epname=''
                      
                      us=rs[i].split('*|=*')
 
@@ -393,22 +453,39 @@ def INDEXTV(url):
                           episode = str(us[2])
                           url = us[0] #need to strip a string to a delimiter and get rid of certain strings
                           url = url.split('.htm',1)[0] + '.htm'
-                          name = us[3]
+                          epname = us[3]
 
                      meta = None
 
 
-                     if _PLT.get_setting('use-meta') == 'true':
-                          metaget=metahandlers.MetaData(translatedTVLinksdatapath)
-                          meta=metaget.get_meta('tvshow',name,year=year[2:-1])
+                     #METACRAP
+                     #getMeta(name=None,season=None,episode=None,year=None,imdbid=None,tvdbid=None):
+                     try:
+                          name = name.replace("[TV SHOW] ","")
+                     except:
+                          pass
+                         
+                     try:
+                          SeasonLocation=name.index('Season')
+                     except:
+                          SeasonLocation=0
+                          
+                     if SeasonLocation > 0:
+                          metaname=name[:SeasonLocation-1]
+                     else:
+                          metaname=name
+                          
+                     meta = getMeta(name=metaname,season='0',episode='0')
+
 
                      if meta is None:
                           if episode != '': # this line only gets rid of junk right now
                                #add directories without meta
-                               addDir('Season ' + str(season) + ' - Episode ' + episode+' - '+name,TVLinks_REFERRER+url,2,cover)
+                               addDir(name+' - ' + 'Season ' + str(season) + ' - Episode ' + episode+' - '+epname,TVLinks_REFERRER+url,2,cover)
                      else:
-                          #add directories with meta
-                          addDir(str(season) + ' - ' + episode+' - '+name,TVLinks_REFERRER+url,2,meta['cover_url'],metainfo=meta)                    
+                          if episode != '': # this line only gets rid of junk right now
+                               #add directories with meta
+                               addDir(name+' - ' + 'Season ' + str(season) + ' - Episode ' + episode+' - '+epname,TVLinks_REFERRER+url,2,meta['cover_url'],metainfo=meta)                    
         
 def INDEX2(url,name):
         try: 
@@ -433,9 +510,12 @@ def INDEX2(url,name):
         regexp = re.compile(r'\((.+?)\)')
         if regexp.search(name) is not None:
             mediatype = "movie"
+            Meta = None
+            meta = getMeta(name=name[:-6],year=name[-5:-1])
         else:
             mediatype = "tv"
-            
+            Meta = None
+            meta = getMeta(name=name[:name.index('- Season')-1],season='0',episode='0')
         for code in match:
              code = code[:-1]
              #get play link
@@ -447,7 +527,13 @@ def INDEX2(url,name):
              link = response.read()
              #turn play link into usable url
              link = link.replace(".cc/",".cc/newipad.mp4?url=")
-             addLink(name,link,cover,mediaType=mediatype)
+             
+             
+
+             if meta is None:
+                  addLink(name,link,cover,mediaType=mediatype)
+             else:
+                  addLink(name,link,meta['cover_url'],mediaType=mediatype,metainfo=meta)
 
 def VIEWLOG(url):
         net.set_cookies(cookiejar)
@@ -463,16 +549,26 @@ def VIEWLOG(url):
 
                 meta = None
                 url = "/"+mediatype+"/"+url
-                if _PLT.get_setting('use-meta') == 'true':
-                     metaget=metahandlers.MetaData(translatedTVLinksdatapath)
-                     meta=metaget.get_meta('movie',name)
-
                 if 'shows' in url:
+                     #METACRAP
                      mode = 22 #if tv show, search for episodes
                      extention = '/url.js'
+                     #getMeta(name=None,season=None,episode=None,year=None,imdbid=None,tvdbid=None):
+                     SeasonLocation=name.index('Season')
+                     SeasonAndEpisode=name[SeasonLocation+7:]
+                     Episode=SeasonAndEpisode[SeasonAndEpisode.index('x')+1:]
+                     Season=SeasonAndEpisode[:SeasonAndEpisode.index('x')]
+                     print '----------------------------->'+Season+'|'+Episode
+                     metaname=name[:SeasonLocation-1]
+                     meta = getMeta(name=metaname,season=Season,episode=Episode)
                 else:
                      mode = 2 #if movie, serve up play link
                      extention = '/play.htm'
+                     name = name.replace('&nbsp;',' ') #if movie show name with year
+                     metaname=name[:-5]
+                     year = name[len(name)-5:-1]
+                     #getMeta(name=None,season=None,episode=None,year=None,imdbid=None,tvdbid=None):
+                     meta = getMeta(name=metaname,year=year)
 
                 if meta is None:
                      #add directories without meta
@@ -485,6 +581,29 @@ def VIEWLOG(url):
         for url, name in match2:
                  addDir(name,TVLinks_REFERRER+'/membercenter.php'+url,900,'')
 
+def getMeta(name=None,season=None,episode=None,year=None,imdbid=None,tvdbid=None):
+        print 'getMeta() ran',name,season,episode,year,imdbid,tvdbid
+        useMeta = _PLT.get_setting('use-meta')
+        print useMeta
+        if useMeta == 'true':
+             print 'use-meta = true'
+             metaget=metahandlers.MetaData(translatedTVLinksdatapath)
+             if episode and season is not None:
+                  print 'getMeta() is tvshow'
+                  #get_episode_meta(self, tvshowtitle, imdb_id, season, episode, air_date='', episode_title='', overlay=''):
+                  #get season and episode
+                  meta=metaget.get_meta('tvshow',name)
+                  
+                  #meta=metaget.get_episode_meta(name,meta['imdbid'],season,episode)
+                  
+                  #_get_tv_extra(self, meta):
+                  #meta=metaget.get_tv_extra(meta)
+             else:
+                  #get_meta(self, media_type, name, imdb_id='', tmdb_id='', year='', overlay=6):
+                  #get regular
+                  meta=metaget.get_meta('movie',name,year=year)
+        return meta
+     
 def NEWMOVIES(url):
         net.set_cookies(cookiejar)
         req = urllib2.Request(url)
@@ -503,9 +622,7 @@ def NEWMOVIES(url):
                      break
                 meta = None
                 year = " ("+year+")"
-                if _PLT.get_setting('use-meta') == 'true':
-                     metaget=metahandlers.MetaData(translatedTVLinksdatapath)
-                     meta=metaget.get_meta('movie',name,year=year[2:-1])
+
 
                 if 'shows' in url:
                      mode = 22 #if tv show, search for episodes
@@ -513,6 +630,7 @@ def NEWMOVIES(url):
                 else:
                      mode = 2 #if movie, serve up play link
                      extention = '/play.htm'
+                     meta=getMeta(name,year=year[2:-1])
 
                 if meta is None:
                      #add directories without meta
@@ -539,9 +657,6 @@ def HOTMOVIES(url):
                           
                      meta = None
                      year = " ("+year+")"
-                     if _PLT.get_setting('use-meta') == 'true':
-                          metaget=metahandlers.MetaData(translatedTVLinksdatapath)
-                          meta=metaget.get_meta('movie',name,year=year[2:-1])
 
                      if 'shows' in url:
                           mode = 22 #if tv show, search for episodes
@@ -549,13 +664,14 @@ def HOTMOVIES(url):
                      else:
                           mode = 2 #if movie, serve up play link
                           extention = '/play.htm'
+                          meta=getMeta(name,year=year[2:-1])
 
                      if meta is None:
                           #add directories without meta
-                          addDir(name+year,TVLinks_REFERRER+url+extention,mode,'')
+                          addDir(name+year,TVLinks_REFERRER+'/'+url+extention,mode,'')
                      else:
                           #add directories with meta
-                          addDir(name+year,TVLinks_REFERRER+url+extention,mode,meta['cover_url'],metainfo=meta)   
+                          addDir(name+year,TVLinks_REFERRER+'/'+url+extention,mode,meta['cover_url'],metainfo=meta)   
 
 def NEWTVSHOWS(url):
         net.set_cookies(cookiejar)
@@ -580,9 +696,6 @@ def NEWTVSHOWS(url):
                     
                 meta = None
                 year = ''
-                if _PLT.get_setting('use-meta') == 'true':
-                     metaget=metahandlers.MetaData(translatedTVLinksdatapath)
-                     meta=metaget.get_meta('movie',name,year=year[2:-1])
 
                 if 'shows' in url:
                      mode = 22 #if tv show, search for episodes
@@ -621,9 +734,6 @@ def TOPTVSHOWS(url):
                          
                      meta = None
                      year = ''
-                     if _PLT.get_setting('use-meta') == 'true':
-                          metaget=metahandlers.MetaData(translatedTVLinksdatapath)
-                          meta=metaget.get_meta('movie',name,year=year[2:-1])
 
                      if 'shows' in url:
                           mode = 22 #if tv show, search for episodes
@@ -659,27 +769,7 @@ def get_params():
 
 
 
-def addLink(name,url,iconimage,mediaType=None):
-        ok=True
-        downloadPath = _PLT.get_setting(mediaType+'downpath')
-        
-        #handle adding context menus
-        contextMenuItems = []
-        contextMenuItems.append(('Show Information', 'XBMC.Action(Info)',))
-        contextMenuItems.append(('Download Video', "RunScript("+downloadScript+","+url.encode('utf-8','ignore')+","+downloadPath+","+name+","+mediaType+")",))
-        win = xbmcgui.Window(10000)
-        win.setProperty('1ch.playing.title', name)
-        win.setProperty('1ch.playing.year', '2069')
-        #win.setProperty('pltv.playing.imdb', )
-        win.setProperty('1ch.playing.season', name[2:3])
-        win.setProperty('1ch.playing.episode', name[5:6])
-        liz=xbmcgui.ListItem(name, iconImage="DefaultVideo.png", thumbnailImage=iconimage)
-        liz.setInfo( type="Video", infoLabels={ "Title": name } )
-        if contextMenuItems:
-           #print str(contextMenuItems)
-           liz.addContextMenuItems(contextMenuItems, replaceItems=True)
-        ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=url,listitem=liz)
-        return ok
+
 
     
               
@@ -739,7 +829,7 @@ elif mode==4:
         
 elif mode==22:
         print ""+url
-        INDEXTV(url)
+        INDEXTV(url,name)
 
 elif mode==100:
         print ""+url

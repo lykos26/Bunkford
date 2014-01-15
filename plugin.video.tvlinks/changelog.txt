@@ -1,4 +1,8 @@
-[B]1.0.5[/B]
+[B]1.0.3[/B]
+
+-Fixed metadata problem *Note* no meta data for large listings such as A/Z - takes too long to load
+
+[B]1.0.0[/B]
 
 -Addded more categories to movies and tv sections
 -Added Downloading capabilities
