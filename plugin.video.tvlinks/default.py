@@ -3,6 +3,7 @@ import urllib,urllib2,cookielib,re,urlresolver
 from metahandler import metahandlers
 from t0mm0.common.addon import Addon
 from t0mm0.common.net import Net
+from operator import itemgetter
 
 #necessary so that the metacontainers.py can use the scrapers
 try: import xbmc,xbmcplugin,xbmcgui,xbmcaddon
@@ -96,7 +97,7 @@ def decode_unicode_references(data):
 
 def cleanUnicode(string):
     try:
-        string = string.replace("'","").replace(unicode(u'\u201c'), '"').replace(unicode(u'\u201d'), '"').replace(unicode(u'\u2019'),'').replace(unicode(u'\u2026'),'...').replace(unicode(u'\u2018'),'').replace(unicode(u'\u2013'),'-')
+        string = string.replace("'","").replace(unicode(u'\xc6'), 'Ae').replace(unicode(u'\u201c'), '"').replace(unicode(u'\u201d'), '"').replace(unicode(u'\u2019'),'').replace(unicode(u'\u2026'),'...').replace(unicode(u'\u2018'),'').replace(unicode(u'\u2013'),'-')
         return string
     except:
         return string
@@ -241,7 +242,8 @@ def addDir(name, url, mode, iconimage, metainfo=False, total=False, season=None,
          else:
              ok = xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=u, listitem=liz, isFolder=True, totalItems=int(total))
          return ok
-     
+
+
 def CATEGORIES():
         LoginStartup()
         if _PLT.get_setting('TVLinks-premium') == 'false':
@@ -259,28 +261,33 @@ def SEARCHSITE(url,kind='all'):
         keyboard.doModal()
         if keyboard.isConfirmed():
             search_string = keyboard.getText()
-            link = Search(search_string)
+            link = cleanUnicode(Search(search_string))
             match=re.compile('<a href="(.+?)" title=".+?">(.+?)</a>').findall(link)
+            total = len(match)
             for url, name in match:
 
-                total = len(match) 
+                
                 meta = None
-                predir = None
+                predir = ''
 
                 if 'shows' in url:
                      #METACRAP
                      mode = 22 #if tv show, search for episodes
                      extention = '/url.js'
-                     predir = '[TV SHOW] '
+                     if (kind=='all'):
+                          predir = '[TV SHOW] '
                      #getMeta(name=None,season=None,episode=None,year=None,imdbid=None,tvdbid=None):
                      meta = getMeta(name=name,season='0',episode='0')
                 else:
                      mode = 2 #if movie, serve up play link
                      extention = '/play.htm'
-                     predir = '[MOVIE] '
+                     if (kind=='all'):
+                          predir = '[MOVIE] '
                      name = name.replace('&nbsp;',' ') #if movie show name with year
-                     metaname=name[:-5]
+                     metaname=name
+                     print 'metaname:' + metaname
                      year = name[len(name)-5:-1]
+                     print 'metayear:' + year
                      #getMeta(name=None,season=None,episode=None,year=None,imdbid=None,tvdbid=None):
                      meta = getMeta(name=metaname,year=year)
      
@@ -310,14 +317,14 @@ def SEARCHSITE(url,kind='all'):
                               addDir(predir+name,TVLinks_REFERRER+url+extention,mode,'')
                          else:
                               #add directories with meta
-                              addDir(predir+name,TVLinks_REFERRER+url+extention,mode,meta['cover_url'],metainfo=meta,total=total)
+                              addDir(predir+name,TVLinks_REFERRER+url+extention,mode,meta['cover_url'],metainfo=meta)
                      elif kind == 'movies' and mode == 2:
                          if meta is None:
                               #add directories without meta
                               addDir(predir+name,TVLinks_REFERRER+url+extention,mode,'')
                          else:
                               #add directories with meta
-                              addDir(predir+name,TVLinks_REFERRER+url+extention,mode,meta['cover_url'],metainfo=met,total=totala)
+                              addDir(predir+name,TVLinks_REFERRER+url+extention,mode,meta['cover_url'],metainfo=meta)
 
 def GENRES(url,kind=''):
         if kind == '':
@@ -333,10 +340,11 @@ def GENRES(url,kind=''):
         link=response.read()
         response.close()
         match=re.compile('<a href="' + urllist + '(.+?)">(.+?)</a>').findall(link)
+        total = len(match)
         for url, genre in match:
              url = TVLinks_REFERRER+'/'+urllist+url
              #add directories without meta
-             addDir(genre,url,1,'')
+             addDir(genre,url,1,'',total=total)
              
  
 def FREEMOVIES(url,kind):
@@ -372,6 +380,7 @@ def INDEX(url):
         link=response.read()
         response.close()
         match=re.compile('<a href="(.+?)" title=".+?">(.+?)</a>(.+?)</a>').findall(link)
+        total = len(match)
         for url, name, year in match:
 
                 meta = None
@@ -386,10 +395,10 @@ def INDEX(url):
 
                 if meta is None:
                      #add directories without meta
-                     addDir(name+year,TVLinks_REFERRER+url+extention,mode,'')
+                     addDir(name+year,TVLinks_REFERRER+url+extention,mode,'',total=total)
                 else:
                      #add directories with meta
-                     addDir(name+year,TVLinks_REFERRER+url+extention,mode,meta['cover_url'],metainfo=meta)
+                     addDir(name+year,TVLinks_REFERRER+url+extention,mode,meta['cover_url'],metainfo=meta,total=total)
 def LATEST(url):     
         net.set_cookies(cookiejar)
         req = urllib2.Request(url)
@@ -399,6 +408,7 @@ def LATEST(url):
         response.close()
         link = link.replace('\\','')
         match=re.compile('<p><a href="(.+?)" title="(.+?)">(.+?)</a></p>').findall(link)
+        total = len(match)
         for url, name, name2 in match:
 
                 meta = None
@@ -415,10 +425,10 @@ def LATEST(url):
 
                 if meta is None:
                      #add directories without meta
-                     addDir(name,TVLinks_REFERRER+url+extention,mode,'')
+                     addDir(name,TVLinks_REFERRER+url+extention,mode,'',total=total)
                 else:
                      #add directories with meta
-                     addDir(name,TVLinks_REFERRER+url+extention,mode,meta['cover_url'],metainfo=meta)
+                     addDir(name,TVLinks_REFERRER+url+extention,mode,meta['cover_url'],metainfo=meta,total=total)
                     
      
 def INDEXTV(url,name):
@@ -437,7 +447,8 @@ def INDEXTV(url,name):
         link=response.read()
         response.close()
         rs = link.split('%=+=%')
-        if (rs[0] == 'var urlarray = new Array();urlarray[1]="201'):
+        tvlist=[]
+        if (len(rs[0]) > 0):
                 num = len(rs)
                 season = 1
                 for i in range(1,num):
@@ -454,39 +465,61 @@ def INDEXTV(url,name):
                           url = us[0] #need to strip a string to a delimiter and get rid of certain strings
                           url = url.split('.htm',1)[0] + '.htm'
                           epname = us[3]
-
-                     meta = None
-
-
-                     #METACRAP
-                     #getMeta(name=None,season=None,episode=None,year=None,imdbid=None,tvdbid=None):
-                     try:
-                          name = name.replace("[TV SHOW] ","")
-                     except:
-                          pass
                          
-                     try:
-                          SeasonLocation=name.index('Season')
-                     except:
-                          SeasonLocation=0
-                          
-                     if SeasonLocation > 0:
-                          metaname=name[:SeasonLocation-1]
-                     else:
-                          metaname=name
-                          
-                     meta = getMeta(name=metaname,season='0',episode='0')
+                     
+                     
+                     if (episode>""):
+                          tvlist.append([name,season,episode,epname,url])
+     
+                     
+                     
+        reverseTV = _PLT.get_setting('reverse-tv')
+        if reverseTV == 'true':
+             tvlist = sorted(tvlist, key=itemgetter(1,2), reverse=True)
+        else:
+             tvlist = sorted(tvlist, key=itemgetter(1,2))
+             
+        for p in tvlist:
+            name = p[0]
+            season = p[1]
+            episode = p[2]
+            epname = p[3]
+            url = p[4]
+            
+            meta = None
+
+            #METACRAP
+            #getMeta(name=None,season=None,episode=None,year=None,imdbid=None,tvdbid=None):
+            try:
+                 name = name.replace("[TV SHOW] ","")
+            except:
+                 pass
+                
+            try:
+                 SeasonLocation=name.index('Season')
+            except:
+                 SeasonLocation=0
+                 
+            if SeasonLocation > 0:
+                metaname=name[:SeasonLocation-1]
+            else:
+                 metaname=name
+                 
+            meta = getMeta(name=metaname,season='0',episode='0')  
 
 
-                     if meta is None:
-                          if episode != '': # this line only gets rid of junk right now
-                               #add directories without meta
-                               addDir(name+' - ' + 'Season ' + str(season) + ' - Episode ' + episode+' - '+epname,TVLinks_REFERRER+url,2,cover)
-                     else:
-                          if episode != '': # this line only gets rid of junk right now
-                               #add directories with meta
-                               addDir(name+' - ' + 'Season ' + str(season) + ' - Episode ' + episode+' - '+epname,TVLinks_REFERRER+url,2,meta['cover_url'],metainfo=meta)                    
-        
+            if meta is None:
+                 if episode != '': # this line only gets rid of junk right now
+                      #add directories without meta
+                      addDir(metaname+' - ' + 'Season ' + str(season) + ' - Episode ' + episode+' - '+epname,TVLinks_REFERRER+url,2,cover,total=num)
+            else:
+                 if episode != '': # this line only gets rid of junk right now
+                      #add directories with meta
+                      addDir(metaname+' - ' + 'Season ' + str(season) + ' - Episode ' + episode+' - '+epname,TVLinks_REFERRER+url,2,meta['cover_url'],metainfo=meta,total=num)                    
+
+
+             
+
 def INDEX2(url,name):
         try: 
              net.set_cookies(cookiejar)
@@ -545,6 +578,7 @@ def VIEWLOG(url):
         match=re.compile('<a href="/(shows|movies)/(.+?)" target="_blank">(.+?)</a>').findall(link)
         match2=re.compile('<a class="p_redirect" href="(.+?)" title="(.+?)"').findall(link)
         #<a href="/shows/20130124/771" target="_blank">Legit Season 1x11</a>
+        total = len(match) + len(match2)
         for mediatype, url, name in match:
 
                 meta = None
@@ -572,19 +606,18 @@ def VIEWLOG(url):
 
                 if meta is None:
                      #add directories without meta
-                     addDir(name,TVLinks_REFERRER+url+extention,mode,'')
+                     addDir(name,TVLinks_REFERRER+url+extention,mode,'',total=total)
                 else:
                      #add directories with meta
-                     addDir(name,TVLinks_REFERRER+url+extention,mode,meta['cover_url'],metainfo=meta)
+                     addDir(name,TVLinks_REFERRER+url+extention,mode,meta['cover_url'],metainfo=meta,total=total)
 
         #Next/Previous
         for url, name in match2:
-                 addDir(name,TVLinks_REFERRER+'/membercenter.php'+url,900,'')
+                 addDir(name,TVLinks_REFERRER+'/membercenter.php'+url,900,'',total=total)
 
 def getMeta(name=None,season=None,episode=None,year=None,imdbid=None,tvdbid=None):
         print 'getMeta() ran',name,season,episode,year,imdbid,tvdbid
         useMeta = _PLT.get_setting('use-meta')
-        print useMeta
         if useMeta == 'true':
              print 'use-meta = true'
              metaget=metahandlers.MetaData(translatedTVLinksdatapath)
@@ -614,7 +647,7 @@ def NEWMOVIES(url):
         match=re.compile('<a href="(.+?)" title="(.+?)">.+?&nbsp;\((.+?)\)</a>').findall(link)
         #<a href="/movies/20131218/105731" title="The Grudge">The Grudge&nbsp;(2004)</a>
         counter = 0
-
+        total = len(match)
         for url, name, year in match:
 
                 counter += 1
@@ -634,10 +667,10 @@ def NEWMOVIES(url):
 
                 if meta is None:
                      #add directories without meta
-                     addDir(name+year,TVLinks_REFERRER+url+extention,mode,'')
+                     addDir(name+year,TVLinks_REFERRER+url+extention,mode,'',total=total)
                 else:
                      #add directories with meta
-                     addDir(name+year,TVLinks_REFERRER+url+extention,mode,meta['cover_url'],metainfo=meta)
+                     addDir(name+year,TVLinks_REFERRER+url+extention,mode,meta['cover_url'],metainfo=meta,total=total)
 
 def HOTMOVIES(url):
         net.set_cookies(cookiejar)
@@ -649,7 +682,7 @@ def HOTMOVIES(url):
         match=re.compile('<a href="(.+?)" title="(.+?)">.+?&nbsp;\((.+?)\)</a>').findall(link)
         #<a href="/movies/20131218/105731" title="The Grudge">The Grudge&nbsp;(2004)</a>
         counter = 0
-
+        total = len(match)
         for url, name, year in match:
 
                 counter += 1
@@ -668,10 +701,10 @@ def HOTMOVIES(url):
 
                      if meta is None:
                           #add directories without meta
-                          addDir(name+year,TVLinks_REFERRER+'/'+url+extention,mode,'')
+                          addDir(name+year,TVLinks_REFERRER+'/'+url+extention,mode,'',total=total)
                      else:
                           #add directories with meta
-                          addDir(name+year,TVLinks_REFERRER+'/'+url+extention,mode,meta['cover_url'],metainfo=meta)   
+                          addDir(name+year,TVLinks_REFERRER+'/'+url+extention,mode,meta['cover_url'],metainfo=meta,total=total)   
 
 def NEWTVSHOWS(url):
         net.set_cookies(cookiejar)
@@ -683,7 +716,7 @@ def NEWTVSHOWS(url):
         match=re.compile('<a href="(.+?)" title="(.+?)">').findall(link)
         #<a href="/shows/20131110/939" title="Ground Floor">Ground Floor</a>
         counter = 0
-
+        total = len(match)
         for url, name in match:
 
                 counter += 1
@@ -706,10 +739,10 @@ def NEWTVSHOWS(url):
 
                 if meta is None:
                      #add directories without meta
-                     addDir(name+year,TVLinks_REFERRER+url+extention,mode,'')
+                     addDir(name+year,TVLinks_REFERRER+url+extention,mode,'',total=total)
                 else:
                      #add directories with meta
-                     addDir(name+year,TVLinks_REFERRER+url+extention,mode,meta['cover_url'],metainfo=meta)
+                     addDir(name+year,TVLinks_REFERRER+url+extention,mode,meta['cover_url'],metainfo=meta,total=total)
 
 def TOPTVSHOWS(url):
         net.set_cookies(cookiejar)
@@ -721,7 +754,7 @@ def TOPTVSHOWS(url):
         match=re.compile('<a href="(.+?)" title="(.+?)">').findall(link)
         #<a href="/shows/20131110/939" title="Ground Floor">Ground Floor</a>
         counter = 0
-
+        total = len(match)
         for url, name in match:
 
                 counter += 1
@@ -744,10 +777,10 @@ def TOPTVSHOWS(url):
 
                      if meta is None:
                           #add directories without meta
-                          addDir(name+year,TVLinks_REFERRER+url+extention,mode,'')
+                          addDir(name+year,TVLinks_REFERRER+url+extention,mode,'',total=total)
                      else:
                           #add directories with meta
-                          addDir(name+year,TVLinks_REFERRER+url+extention,mode,meta['cover_url'],metainfo=meta)                     
+                          addDir(name+year,TVLinks_REFERRER+url+extention,mode,meta['cover_url'],metainfo=meta,total=total)                     
 def get_params():
         param=[]
         paramstring=sys.argv[2]

@@ -1,6 +1,7 @@
 <settings>
-   <category label="Meta Data">
+   <category label="Settings">
   	<setting id="use-meta" type="bool" label="Use Meta Data" default="true"/>
+	<setting id="reverse-tv" type="bool" label="Newest TV Shows at top in episode lists?" default="false"/>
    </category>
    <category label="Login Data">
   	<setting id="TVLinks-username" type="text" label="Login:" default=""/>
