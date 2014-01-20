@@ -186,8 +186,8 @@ def addDir(name, url, mode, iconimage, metainfo=False, total=False, season=None,
          
          u = sys.argv[0] + "?url=" + sysurl + "&mode=" + str(mode) + "&name=" + sysname + "&season="+str(season) + "&kind="+str(kind)
          ok = True
-         
-         if meta is not False:
+
+
          #handle adding context menus
          contextMenuItems = []
          contextMenuItems.append(('Show Information', 'XBMC.Action(Info)',))
