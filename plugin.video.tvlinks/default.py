@@ -47,9 +47,12 @@ translatedTVLinksdatapath = xbmcpath(TVLinksdatapath,'')
 tvlinkspath = TVLinksdatapath
 datapath = _PLT.get_profile()
 cookie_path = os.path.join(datapath)
-art = TVLinkspath+'/resources/art'
+#art = TVLinkspath+'/resources/art'
+artdir = "special://home/addons/plugin.video.tvlinks/resources/media/"
+
 cookiejar = os.path.join(cookie_path,'losmovies.lwp')
 net = Net()
+
 downloadScript = "special://home/addons/plugin.video.tvlinks/resources/lib/download.py"
 
 def LoginStartup():
@@ -122,9 +125,9 @@ def addLink(name,url,iconimage,mediaType=None,metainfo=False):
         contextMenuItems.append(('Download Video', "RunScript("+downloadScript+","+url.encode('utf-8','ignore')+","+downloadPath+","+name+","+mediaType+")",))
         if meta == False:
              liz=xbmcgui.ListItem(name, iconImage=iconimage, thumbnailImage=iconimage)
+             liz.setProperty('fanart_image', 'special://home/addons/plugin.video.tvlinks/fanart.jpg')
              liz.setInfo( type="Video", infoLabels={ "Title": name } )
         else:
-             print '----------------------------> metaCAUght!'
              liz = xbmcgui.ListItem(name, iconImage=str(meta['cover_url']), thumbnailImage=str(meta['cover_url']))
 
 
@@ -157,14 +160,14 @@ def addLink(name,url,iconimage,mediaType=None,metainfo=False):
                    
              
              liz.setInfo(type="Video", infoLabels=infoLabels)
-        if contextMenuItems:
-           #print str(contextMenuItems)
-           liz.addContextMenuItems(contextMenuItems, replaceItems=True)
-           
-        ok = xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=url,listitem=liz)
-        #ok = xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=u, listitem=liz, isFolder=True)
-        return ok
 
+     
+        if contextMenuItems:
+           liz.addContextMenuItems(contextMenuItems, replaceItems=True)
+            
+        ok = xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=url,listitem=liz)
+        return ok
+     
 def addDir(name, url, mode, iconimage, metainfo=False, total=False, season=None, kind=None, cover=None):
     if xbmc_imported:
          meta = metainfo
@@ -185,7 +188,6 @@ def addDir(name, url, mode, iconimage, metainfo=False, total=False, season=None,
          ok = True
          
          if meta is not False:
-             print str(meta)
          #handle adding context menus
          contextMenuItems = []
          contextMenuItems.append(('Show Information', 'XBMC.Action(Info)',))
@@ -193,10 +195,12 @@ def addDir(name, url, mode, iconimage, metainfo=False, total=False, season=None,
          #handle adding meta
          if meta == False:
              liz = xbmcgui.ListItem(name, iconImage=iconimage, thumbnailImage=iconimage)
+             liz.setProperty('fanart_image', 'special://home/addons/plugin.video.tvlinks/fanart.jpg')
              liz.setInfo(type="Video", infoLabels={"Title": name})
 
          else:
-                             
+             if meta['cover_url'] == '': meta['cover_url'] = 'special://home/addons/plugin.video.tvlinks/icon.png'
+             if meta['backdrop_url'] == '': meta['backdrop_url'] = 'special://home/addons/plugin.video.tvlinks/fanart.jpg'
              liz = xbmcgui.ListItem(name, iconImage=str(meta['cover_url']), thumbnailImage=str(meta['cover_url']))
 
 
@@ -231,11 +235,8 @@ def addDir(name, url, mode, iconimage, metainfo=False, total=False, season=None,
              liz.setInfo(type="Video", infoLabels=infoLabels)
                            
          if contextMenuItems:
-             #print str(contextMenuItems)
              liz.addContextMenuItems(contextMenuItems, replaceItems=True)
          #########
-
-         print '          Mode=' + str(mode) + ' URL=' + str(url)
          #Do some crucial stuff
          if total is False:
              ok = xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=u, listitem=liz, isFolder=True)
@@ -247,12 +248,13 @@ def addDir(name, url, mode, iconimage, metainfo=False, total=False, season=None,
 def CATEGORIES():
         LoginStartup()
         if _PLT.get_setting('TVLinks-premium') == 'false':
-             addDir('Free Movies',TVLinks_REFERRER+'/freemovies/',100,'')
+             addDir('Free Movies',TVLinks_REFERRER+'/freemovies/',100,artdir+'movie.png')
         else:
-             addDir('TV Shows',TVLinks_REFERRER+'/tvlist/',100,'',kind='tvshows')
-             addDir('Movies',TVLinks_REFERRER+'/movielist/',100,'',kind='movies')
-             addDir('Search All',TVLinks_REFERRER+'/search.php',200,'',kind='all')
-        addDir('Viewing Log',TVLinks_REFERRER+'/membercenter.php?sub=history',900,'')
+             addDir('Movies',TVLinks_REFERRER+'/movielist/',100,artdir+'movie.png',kind='movies')
+             addDir('TV Shows',TVLinks_REFERRER+'/tvlist/',100,artdir+'tv.png',kind='tvshows')
+             addDir('Search All',TVLinks_REFERRER+'/search.php',200,artdir+'search-glass.png',kind='all')
+             
+        addDir('Viewing Log',TVLinks_REFERRER+'/membercenter.php?sub=history',900,artdir+'log.png')
 
 def SEARCHSITE(url,kind='all'):
         keyboard = xbmc.Keyboard()
@@ -285,9 +287,7 @@ def SEARCHSITE(url,kind='all'):
                           predir = '[MOVIE] '
                      name = name.replace('&nbsp;',' ') #if movie show name with year
                      metaname=name
-                     print 'metaname:' + metaname
                      year = name[len(name)-5:-1]
-                     print 'metayear:' + year
                      #getMeta(name=None,season=None,episode=None,year=None,imdbid=None,tvdbid=None):
                      meta = getMeta(name=metaname,year=year)
      
@@ -302,7 +302,7 @@ def SEARCHSITE(url,kind='all'):
                          else:
                               #add directories with meta
                               addDir(predir+name,TVLinks_REFERRER+url+extention,mode,meta['cover_url'],metainfo=meta,total=total)
-                     print year
+
                 else:   #else if premium accounts show all results or filtered based on tv or movies
                      if kind == 'all':
                          if meta is None:
@@ -331,8 +331,10 @@ def GENRES(url,kind=''):
              FREEMOVIES()
         elif kind == 'movies':
              urllist = 'movielist/'
+             thumb = artdir+'movie.png'
         elif kind == 'tvshows':
              urllist = 'tvlist/'
+             thumb = artdir+'tv.png'
         net.set_cookies(cookiejar)
         req = urllib2.Request(url)
         req.add_header('User-Agent', USER_AGENT)
@@ -344,23 +346,29 @@ def GENRES(url,kind=''):
         for url, genre in match:
              url = TVLinks_REFERRER+'/'+urllist+url
              #add directories without meta
-             addDir(genre,url,1,'',total=total)
+             addDir(genre,url,1,thumb,total=total)
              
  
 def FREEMOVIES(url,kind):
+        if kind == 'movies':
+             thumb = artdir+'moviegenre-logo.png'
+             searchthumb = artdir+'moviesearch-logo.png'
+        elif kind == 'tvshows':
+             thumb = artdir+'tvgenre-logo.png'
+             searchthumb = artdir+'tvsearch-logo.png'
         t = kind
         net.set_cookies(cookiejar)
-        addDir('A to Z',url,101,'')
-        addDir('Genre',TVLinks_REFERRER,300,'',kind=t)
+        addDir('A to Z',url,101,artdir+'atoz.png')
+        addDir('Genre',TVLinks_REFERRER,300,thumb,kind=t)
         if kind == 'tvshows':
-             addDir('Latest Episodes',TVLinks_REFERRER+'/tvtoplist.htm',201,'')
-             addDir('Recently Added TV Shows',TVLinks_REFERRER+'/tv.htm',280,'')
-             addDir('Top TV Shows',TVLinks_REFERRER+'/tv.htm',281,'')
+             addDir('Latest Episodes',TVLinks_REFERRER+'/tvtoplist.htm',201,artdir+'toptvshows.png')
+             addDir('Recently Added TV Shows',TVLinks_REFERRER+'/tv.htm',280,artdir+'recentlyaddedshows.png')
+             addDir('Top TV Shows',TVLinks_REFERRER+'/tv.htm',281,artdir+'toptvshows.png')
         if kind == 'movies':
-             addDir('Popular Movies',TVLinks_REFERRER+'/movietoplist.htm',201,'')
-             addDir('Recently Added Movies',TVLinks_REFERRER+'/movie.htm',250,'')
-             addDir('Hot Movies',TVLinks_REFERRER+'/movie.htm',251,'')
-        addDir('Search',TVLinks_REFERRER+'/search.php',200,'',kind=t)
+             addDir('Popular Movies',TVLinks_REFERRER+'/movietoplist.htm',201,artdir+'popularmovies.png')
+             addDir('Recently Added Movies',TVLinks_REFERRER+'/movie.htm',250,artdir+'recentlyaddedmovies.png')
+             addDir('Hot Movies',TVLinks_REFERRER+'/movie.htm',251,artdir+'hotmovies.png')
+        addDir('Search',TVLinks_REFERRER+'/search.php',200,searchthumb,kind=t)
 
 
 def FREEMOVIESAZ(url):
@@ -368,9 +376,9 @@ def FREEMOVIESAZ(url):
         az = ['#','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
         for i in range(len(az)):
              if az[i] == '#':   
-                  addDir(az[i],url+'digit.htm',1,'')
+                  addDir(az[i],url+'digit.htm',1,artdir+'movie.png')
              else:
-                  addDir(az[i],url+az[i]+'.htm',1,'')
+                  addDir(az[i],url+az[i]+'.htm',1,artdir+'movie.png')
                   
 def INDEX(url):     
         net.set_cookies(cookiejar)
@@ -389,13 +397,15 @@ def INDEX(url):
                 if 'shows' in url:
                      mode = 22 #if tv show, search for episodes
                      extention = '/url.js'
+                     thumb = artdir+'tv.png'
                 else:
                      mode = 2 #if movie, serve up play link
                      extention = '/play.htm'
+                     thumb = artdir+'movie.png'
 
                 if meta is None:
                      #add directories without meta
-                     addDir(name+year,TVLinks_REFERRER+url+extention,mode,'',total=total)
+                     addDir(name+year,TVLinks_REFERRER+url+extention,mode,thumb,total=total)
                 else:
                      #add directories with meta
                      addDir(name+year,TVLinks_REFERRER+url+extention,mode,meta['cover_url'],metainfo=meta,total=total)
@@ -415,17 +425,29 @@ def LATEST(url):
                 
 
                 if 'shows' in url:
+                     thumb = artdir+'tv.png'
                      mode = 22 #if tv show, search for episodes
                      extention = '/url.js'
+                     try:
+                          SeasonLocation=name.index('Season')
+                     except:
+                          SeasonLocation=0
+                           
+                     if SeasonLocation > 0:
+                         metaname=name[:SeasonLocation-1]
+                     else:
+                          metaname=name
+                     meta=getMeta(metaname,season='0',episode='0')
                 else:
                      mode = 2 #if movie, serve up play link
+                     thumb = artdir+'movie.png'
                      extention = '/play.htm'
                      name = name2.replace('&nbsp;',' ') #if movie show name with year
                      meta=getMeta(name[:-7],year=name[-5:-1])
 
                 if meta is None:
                      #add directories without meta
-                     addDir(name,TVLinks_REFERRER+url+extention,mode,'',total=total)
+                     addDir(name,TVLinks_REFERRER+url+extention,mode,thumb,total=total)
                 else:
                      #add directories with meta
                      addDir(name,TVLinks_REFERRER+url+extention,mode,meta['cover_url'],metainfo=meta,total=total)
@@ -505,7 +527,7 @@ def INDEXTV(url,name):
             else:
                  metaname=name
                  
-            meta = getMeta(name=metaname,season='0',episode='0')  
+            meta = getMeta(name=metaname,season=season,episode=episode)  
 
 
             if meta is None:
@@ -567,7 +589,7 @@ def INDEX2(url,name):
                   addLink(name,link,cover,mediaType=mediatype)
              else:
                   addLink(name,link,meta['cover_url'],mediaType=mediatype,metainfo=meta)
-
+                  
 def VIEWLOG(url):
         net.set_cookies(cookiejar)
         req = urllib2.Request(url)
@@ -584,6 +606,7 @@ def VIEWLOG(url):
                 meta = None
                 url = "/"+mediatype+"/"+url
                 if 'shows' in url:
+                     thumb = artdir+'tv.png'
                      #METACRAP
                      mode = 22 #if tv show, search for episodes
                      extention = '/url.js'
@@ -592,10 +615,10 @@ def VIEWLOG(url):
                      SeasonAndEpisode=name[SeasonLocation+7:]
                      Episode=SeasonAndEpisode[SeasonAndEpisode.index('x')+1:]
                      Season=SeasonAndEpisode[:SeasonAndEpisode.index('x')]
-                     print '----------------------------->'+Season+'|'+Episode
                      metaname=name[:SeasonLocation-1]
                      meta = getMeta(name=metaname,season=Season,episode=Episode)
                 else:
+                     thumb = artdir+'movie.png'
                      mode = 2 #if movie, serve up play link
                      extention = '/play.htm'
                      name = name.replace('&nbsp;',' ') #if movie show name with year
@@ -606,31 +629,29 @@ def VIEWLOG(url):
 
                 if meta is None:
                      #add directories without meta
-                     addDir(name,TVLinks_REFERRER+url+extention,mode,'',total=total)
+                     addDir(name,TVLinks_REFERRER+url+extention,mode,thumb,total=total)
                 else:
                      #add directories with meta
                      addDir(name,TVLinks_REFERRER+url+extention,mode,meta['cover_url'],metainfo=meta,total=total)
 
         #Next/Previous
         for url, name in match2:
-                 addDir(name,TVLinks_REFERRER+'/membercenter.php'+url,900,'',total=total)
+                 if name == 'Next': thumb = artdir + 'next.png'
+                 if name == 'Previous': thumb = artdir + 'previous.png'
+                 if name == 'Home': thumb = artdir + 'home.png'
+                 if name == 'End': thumb = artdir + 'end.png'
+                 addDir(name,TVLinks_REFERRER+'/membercenter.php'+url,900,thumb,total=total)
 
 def getMeta(name=None,season=None,episode=None,year=None,imdbid=None,tvdbid=None):
-        print 'getMeta() ran',name,season,episode,year,imdbid,tvdbid
         useMeta = _PLT.get_setting('use-meta')
         if useMeta == 'true':
-             print 'use-meta = true'
+             print 'getMeta() ran',name,season,episode,year,imdbid,tvdbid
              metaget=metahandlers.MetaData(translatedTVLinksdatapath)
              if episode and season is not None:
-                  print 'getMeta() is tvshow'
                   #get_episode_meta(self, tvshowtitle, imdb_id, season, episode, air_date='', episode_title='', overlay=''):
                   #get season and episode
+                  
                   meta=metaget.get_meta('tvshow',name)
-                  
-                  #meta=metaget.get_episode_meta(name,meta['imdbid'],season,episode)
-                  
-                  #_get_tv_extra(self, meta):
-                  #meta=metaget.get_tv_extra(meta)
              else:
                   #get_meta(self, media_type, name, imdb_id='', tmdb_id='', year='', overlay=6):
                   #get regular
@@ -733,6 +754,7 @@ def NEWTVSHOWS(url):
                 if 'shows' in url:
                      mode = 22 #if tv show, search for episodes
                      extention = '/url.js'
+                     meta=getMeta(name,season='0',episode='0')
                 else:
                      mode = 2 #if movie, serve up play link
                      extention = '/play.htm'
@@ -771,6 +793,7 @@ def TOPTVSHOWS(url):
                      if 'shows' in url:
                           mode = 22 #if tv show, search for episodes
                           extention = '/url.js'
+                          meta=getMeta(name,season='0',episode='0')                          
                      else:
                           mode = 2 #if movie, serve up play link
                           extention = '/play.htm'
