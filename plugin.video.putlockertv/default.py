@@ -11,21 +11,10 @@ from metahandler import metahandlers
 # Bunkford - 2013.
 #
 # TODO:
-#    Invite Sharing
-#    Switch all to soupstrainer - should speed up
-#    Focus on putlockertvshows
 #    multithreaded downloader class running in background.
 #    get helpText from file.
 
 helpText = """
-For this script to work correctly you need to have valid login information for the following invite only sites:
-
-     http://www.iseri.es
-     http://www.bunnymovie.com
-     http://www.barwo.com (not updated anymore, switched to bunnymovie)
-
-     Add your login credentials to the plugin settings.
-
 Downloading:
 
      For downloading to work correctly you need to specify download paths in the plugin settings.
@@ -35,7 +24,7 @@ def xbmcpath(path,filename):
      return translatedpath
 
 #CONSTANTS
-_PLUG = Addon('plugin.video.bunkford', sys.argv)
+_PLUG = Addon('plugin.video.putlockertv', sys.argv)
 
 USER_AGENT = "Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_0 like Mac OS X; en-us) AppleWebKit/532.9 (KHTML, like Gecko) Version/4.0.5 Mobile/8A293 Safari/6531.22.7"
 
@@ -46,7 +35,7 @@ urlimages = putlocker_URL+ '/p/'
 urlwatch = putlocker_URL+ '/watch/'
 allurl = putlocker_URL + '/tv-shows-list.html'
 
-adatapath = 'special://profile/addon_data/plugin.video.bunkford'
+adatapath = 'special://profile/addon_data/plugin.video.putlockertv'
 metapath = adatapath+'/mirror_page_meta_cache'
 downinfopath = adatapath+'/downloadinfologs'
 transdowninfopath = xbmcpath(downinfopath,'')
@@ -54,9 +43,9 @@ transmetapath = xbmcpath(metapath,'')
 translateddatapath = xbmcpath(adatapath,'')
 path = adatapath
 datapath = _PLUG.get_profile()
-artdir = "special://home/addons/plugin.video.bunkford/resources/media/"
-downloadScript = "special://home/addons/plugin.video.bunkford/resources/lib/download.py"
-textBoxesScript = "special://home/addons/plugin.video.bunkford/resources/lib/textBoxes.py"
+artdir = "special://home/addons/plugin.video.putlockertv/resources/media/"
+downloadScript = "special://home/addons/plugin.video.putlockertv/resources/lib/download.py"
+textBoxesScript = "special://home/addons/plugin.video.putlockertv/resources/lib/textBoxes.py"
 
 #cookie constants
 cookie_path = os.path.join(datapath)
@@ -260,7 +249,7 @@ def addLink(name,url,iconimage,mediaType=None,infoLabels=False,trailer=None,meta
 
         if meta is None:     
              liz=xbmcgui.ListItem(name, iconImage="DefaultVideo.png", thumbnailImage=iconimage)
-             liz.setProperty('fanart_image', 'special://home/addons/plugin.video.bunkford/fanart.jpg')
+             liz.setProperty('fanart_image', 'special://home/addons/plugin.video.putlockertv/fanart.jpg')
         else:
              liz = xbmcgui.ListItem(name, iconImage=str(meta['cover_url']), thumbnailImage=str(meta['cover_url']))
 
@@ -327,7 +316,7 @@ def addDir(name,url,mode,iconimage,meta=None,season=None):
         
         if meta is None:     
              liz=xbmcgui.ListItem(name, iconImage="DefaultFolder.png", thumbnailImage=iconimage)
-             liz.setProperty('fanart_image', 'special://home/addons/plugin.video.bunkford/fanart.jpg')
+             liz.setProperty('fanart_image', 'special://home/addons/plugin.video.putlockertv/fanart.jpg')
         else:
              contextMenuItems.append(('Show Information', 'XBMC.Action(Info)',))
              liz = xbmcgui.ListItem(name, iconImage=str(meta['cover_url']), thumbnailImage=str(meta['cover_url']))
