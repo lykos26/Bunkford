@@ -361,7 +361,7 @@ def FREEMOVIES(url,kind):
         addDir('A to Z',url,101,artdir+'atoz.png')
         addDir('Genre',TVLinks_REFERRER,300,thumb,kind=t)
         if kind == 'tvshows':
-             addDir('Latest Episodes',TVLinks_REFERRER+'/tvtoplist.htm',201,artdir+'toptvshows.png')
+             addDir('Latest Episodes',TVLinks_REFERRER+'/tvtoplist.htm',201,artdir+'tvlatestepisodes.png')
              addDir('Recently Added TV Shows',TVLinks_REFERRER+'/tv.htm',280,artdir+'recentlyaddedshows.png')
              addDir('Top TV Shows',TVLinks_REFERRER+'/tv.htm',281,artdir+'toptvshows.png')
         if kind == 'movies':
