@@ -474,7 +474,7 @@ def INDEXTV(url,name):
                 num = len(rs)
                 season = 1
                 for i in range(1,num):
-                     if ';urlarray[' in rs[i]:
+                     if 'urlarray' in rs[i]:
                           season = str(find_between(rs[i],'[',']'))
                      episode=''
                      url=''
@@ -497,9 +497,9 @@ def INDEXTV(url,name):
                      
         reverseTV = _PLT.get_setting('reverse-tv')
         if reverseTV == 'true':
-             tvlist = sorted(tvlist, key=itemgetter(1,2), reverse=True)
+             tvlist = sorted(tvlist, key=lambda x: int(x[1]), reverse=True)
         else:
-             tvlist = sorted(tvlist, key=itemgetter(1,2))
+             tvlist = sorted(tvlist, key=lambda x: int(x[1]))
              
         for p in tvlist:
             name = p[0]
