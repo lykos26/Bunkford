@@ -4,6 +4,7 @@ from metahandler import metahandlers
 from t0mm0.common.addon import Addon
 from t0mm0.common.net import Net
 from operator import itemgetter
+import sqlite3 as db
 
 #necessary so that the metacontainers.py can use the scrapers
 try: import xbmc,xbmcplugin,xbmcgui,xbmcaddon
@@ -54,6 +55,11 @@ cookiejar = os.path.join(cookie_path,'losmovies.lwp')
 net = Net()
 
 downloadScript = "special://home/addons/plugin.video.tvlinks/resources/lib/download.py"
+
+#for favorites 
+favoritesScript = "special://home/addons/plugin.video.tvlinks/resources/lib/favorites.py"
+db_location = os.path.join(cookie_path,'database.db')
+
 
 def LoginStartup():
       if _PLT.get_setting('TVLinks-username') == '':
@@ -187,11 +193,20 @@ def addDir(name, url, mode, iconimage, metainfo=False, total=False, season=None,
          u = sys.argv[0] + "?url=" + sysurl + "&mode=" + str(mode) + "&name=" + sysname + "&season="+str(season) + "&kind="+str(kind)
          ok = True
 
-
+         if kind==None:
+              #figure out what kind directory is
+              if 'shows' in url: kind = 'tv'
+              if 'movies' in url: kind = 'movie'
+         
          #handle adding context menus
          contextMenuItems = []
          contextMenuItems.append(('Show Information', 'XBMC.Action(Info)',))
-         
+
+         if(kind>"" and kind<>"favorite"): #only show if we are able to set item as favorite
+              contextMenuItems.append(('Add to Favorites', "RunScript("+favoritesScript+","+db_location+","+kind+","+urllib.quote_plus(name)+","+url+","+str(mode)+","+iconimage+")",))
+         if(kind=="favorite"):
+               contextMenuItems.append(('Remove from Favorites', "RunScript("+favoritesScript+","+db_location+","+kind+","+urllib.quote_plus(name)+","+url+","+str(mode)+","+iconimage+")",))
+
          #handle adding meta
          if meta == False:
              liz = xbmcgui.ListItem(name, iconImage=iconimage, thumbnailImage=iconimage)
@@ -244,7 +259,29 @@ def addDir(name, url, mode, iconimage, metainfo=False, total=False, season=None,
              ok = xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=u, listitem=liz, isFolder=True, totalItems=int(total))
          return ok
 
+def FAVORITES(kind):
+     con = None
+     con = db.connect(db_location)
+     with con:
+          con.row_factory = db.Row
+          cur = con.cursor()
+          if kind == 'all': cur.execute("SELECT * FROM favorites")
+          if kind == 'movie': cur.execute("""SELECT * FROM favorites WHERE kind=?""", ['movie'])
+          if kind == "tv": cur.execute("""SELECT * FROM favorites WHERE kind=?""", ['tv'])
+          
+          rows = cur.fetchall()
+          for row in rows:
+               if 'shows' in row["url"]:
+                     predir = "[TV SHOW] "
+                     meta=getMeta(row["name"],season='0',episode='0')
+               if 'movies' in row["url"]:
+                    predir = "[MOVIE] "
+                    name = row["name"].replace('&nbsp;',' ') #if movie show name with year
+                    meta=getMeta(name[:-7],year=name[-5:-1])
+               if kind == 'all': name = predir + name      
+               addDir(row["name"],row["url"],row["mode"],row["iconimage"], metainfo=meta, kind="favorite")
 
+             
 def CATEGORIES():
         LoginStartup()
         if _PLT.get_setting('TVLinks-premium') == 'false':
@@ -253,7 +290,7 @@ def CATEGORIES():
              addDir('Movies',TVLinks_REFERRER+'/movielist/',100,artdir+'movie.png',kind='movies')
              addDir('TV Shows',TVLinks_REFERRER+'/tvlist/',100,artdir+'tv.png',kind='tvshows')
              addDir('Search All',TVLinks_REFERRER+'/search.php',200,artdir+'search-glass.png',kind='all')
-             
+             addDir('All Favorites',TVLinks_REFERRER,600,'',kind='all')
         addDir('Viewing Log',TVLinks_REFERRER+'/membercenter.php?sub=history',900,artdir+'log.png')
 
 def SEARCHSITE(url,kind='all'):
@@ -364,10 +401,12 @@ def FREEMOVIES(url,kind):
              addDir('Latest Episodes',TVLinks_REFERRER+'/tvtoplist.htm',201,artdir+'tvlatestepisodes.png')
              addDir('Recently Added TV Shows',TVLinks_REFERRER+'/tv.htm',280,artdir+'recentlyaddedshows.png')
              addDir('Top TV Shows',TVLinks_REFERRER+'/tv.htm',281,artdir+'toptvshows.png')
+             addDir('Favorites',TVLinks_REFERRER,600,'',kind='tv')
         if kind == 'movies':
              addDir('Popular Movies',TVLinks_REFERRER+'/movietoplist.htm',201,artdir+'popularmovies.png')
              addDir('Recently Added Movies',TVLinks_REFERRER+'/movie.htm',250,artdir+'recentlyaddedmovies.png')
              addDir('Hot Movies',TVLinks_REFERRER+'/movie.htm',251,artdir+'hotmovies.png')
+             addDir('Favorites',TVLinks_REFERRER,600,'',kind='movie')
         addDir('Search',TVLinks_REFERRER+'/search.php',200,searchthumb,kind=t)
 
 
@@ -570,7 +609,10 @@ def INDEX2(url,name):
         else:
             mediatype = "tv"
             Meta = None
-            meta = getMeta(name=name[:name.index('- Season')-1],season='0',episode='0')
+            try:
+                 meta = getMeta(name=name[:name.index('- Season')-1],season='0',episode='0')
+            except:
+                 meta = getMeta(name=name,season='0',episode='0')
         for code in match:
              code = code[:-1]
              #get play link
@@ -645,12 +687,10 @@ def VIEWLOG(url):
 def getMeta(name=None,season=None,episode=None,year=None,imdbid=None,tvdbid=None):
         useMeta = _PLT.get_setting('use-meta')
         if useMeta == 'true':
-             print 'getMeta() ran',name,season,episode,year,imdbid,tvdbid
              metaget=metahandlers.MetaData(translatedTVLinksdatapath)
              if episode and season is not None:
                   #get_episode_meta(self, tvshowtitle, imdb_id, season, episode, air_date='', episode_title='', overlay=''):
-                  #get season and episode
-                  
+                  #get season and episode      
                   meta=metaget.get_meta('tvshow',name)
              else:
                   #get_meta(self, media_type, name, imdb_id='', tmdb_id='', year='', overlay=6):
@@ -922,6 +962,10 @@ elif mode==281:
 elif mode==300:
         print ""+url
         GENRES(url,kind)
+
+elif mode==600:
+        print ""+url
+        FAVORITES(kind)
 
 elif mode==900:
         print ""+url

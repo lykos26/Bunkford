@@ -115,7 +115,7 @@
   </extension>
 </addon>
 
-<addon id="plugin.video.tvlinks" name="TVLinks.cc" provider-name="bunkford" version="1.5.4">
+<addon id="plugin.video.tvlinks" name="TVLinks.cc" provider-name="bunkford" version="1.5.5">
     <requires>
         <import addon="xbmc.python" version="2.0"/>
         <import addon="script.module.urlresolver"  version="1.0.0"/>
@@ -126,7 +126,7 @@
   </extension>
   <extension point="xbmc.addon.metadata">
 	<summary lang="en">TVLinks Plugin</summary>
-    <description lang="en">***FIXED META DATA*** PLUGIN WORKING GOOD - Plugin that lets you browse and play Free Movies from TVLinks.cc! Login is required, change username and password in settings. </description>
+    <description lang="en">Plugin that lets you browse and play Movies and TV Shows from TVLinks.cc! Login is required, change username and password in settings. </description>
     <disclaimer lang="en">Some parts of this addon may not be legal in your country of residence - please check with your local laws before installing.</disclaimer>
     <platform>all</platform>
     <language />
