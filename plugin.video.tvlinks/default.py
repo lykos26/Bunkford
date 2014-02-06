@@ -150,7 +150,6 @@ def addLink(name,url,iconimage,mediaType=None,metainfo=False):
              infoLabels['code'] = str(meta['imdb_id'])
              infoLabels['rating'] = float(meta['rating'])
              #infoLabels['overlay'] = meta['watched'] # watched 7, unwatched 6
-
             
              
              try:
@@ -278,8 +277,8 @@ def FAVORITES(kind):
                     predir = "[MOVIE] "
                     name = row["name"].replace('&nbsp;',' ') #if movie show name with year
                     meta=getMeta(name[:-7],year=name[-5:-1])
-               if kind == 'all': name = predir + name      
-               addDir(row["name"],row["url"],row["mode"],row["iconimage"], metainfo=meta, kind="favorite")
+               if kind <> 'all': predir = ""    
+               addDir(predir + row["name"],row["url"],row["mode"],row["iconimage"], metainfo=meta, kind="favorite")
 
              
 def CATEGORIES():
@@ -290,7 +289,7 @@ def CATEGORIES():
              addDir('Movies',TVLinks_REFERRER+'/movielist/',100,artdir+'movie.png',kind='movies')
              addDir('TV Shows',TVLinks_REFERRER+'/tvlist/',100,artdir+'tv.png',kind='tvshows')
              addDir('Search All',TVLinks_REFERRER+'/search.php',200,artdir+'search-glass.png',kind='all')
-             addDir('All Favorites',TVLinks_REFERRER,600,'',kind='all')
+             addDir('All Favorites',TVLinks_REFERRER,600,artdir+'favorite.png',kind='all')
         addDir('Viewing Log',TVLinks_REFERRER+'/membercenter.php?sub=history',900,artdir+'log.png')
 
 def SEARCHSITE(url,kind='all'):
@@ -401,12 +400,12 @@ def FREEMOVIES(url,kind):
              addDir('Latest Episodes',TVLinks_REFERRER+'/tvtoplist.htm',201,artdir+'tvlatestepisodes.png')
              addDir('Recently Added TV Shows',TVLinks_REFERRER+'/tv.htm',280,artdir+'recentlyaddedshows.png')
              addDir('Top TV Shows',TVLinks_REFERRER+'/tv.htm',281,artdir+'toptvshows.png')
-             addDir('Favorites',TVLinks_REFERRER,600,'',kind='tv')
+             addDir('Favorites',TVLinks_REFERRER,600,artdir+'favorite.png',kind='tv')
         if kind == 'movies':
              addDir('Popular Movies',TVLinks_REFERRER+'/movietoplist.htm',201,artdir+'popularmovies.png')
              addDir('Recently Added Movies',TVLinks_REFERRER+'/movie.htm',250,artdir+'recentlyaddedmovies.png')
              addDir('Hot Movies',TVLinks_REFERRER+'/movie.htm',251,artdir+'hotmovies.png')
-             addDir('Favorites',TVLinks_REFERRER,600,'',kind='movie')
+             addDir('Favorites',TVLinks_REFERRER,600,artdir+'favorite.png',kind='movie')
         addDir('Search',TVLinks_REFERRER+'/search.php',200,searchthumb,kind=t)
 
 
